@@ -349,7 +349,10 @@ export default function AdminModalView({
                         className={`cat-filter-btn ${adminScheduleCategory === cat ? 'active' : ''}`}
                         onClick={() => setAdminScheduleCategory(cat)}
                       >
-                        {cat === 'Semua' ? 'Semua Kategori' : `${getMenuIcon(cat)} ${cat}`}
+                        {cat !== 'Semua' && (
+                          <span style={{ fontSize: '13px' }}>{getMenuIcon(cat)}</span>
+                        )}
+                        <span>{cat === 'Semua' ? 'Semua Kategori' : cat}</span>
                       </button>
                     ))}
                   </div>
