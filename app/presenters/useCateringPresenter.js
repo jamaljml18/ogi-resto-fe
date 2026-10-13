@@ -322,9 +322,8 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
         },
         adminToken
       );
-      if (res && res.menu) {
-        setAdminAllMenus((prev) => sortMenusNaturally([...prev, res.menu]));
-      }
+      if (!res?.success || !res.menu) throw new Error('Menu belum tersimpan di backend.');
+      setAdminAllMenus((prev) => sortMenusNaturally([...prev, res.menu]));
     } catch(error) {handleApiError(error);return;}
 
     showToast(`🎉 Menu "${newMenuForm.name}" berhasil ditambahkan!`);
