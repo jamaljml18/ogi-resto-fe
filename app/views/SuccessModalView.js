@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { formatRupiah } from '../models/initialData';
 
 export default function SuccessModalView({
@@ -97,7 +98,7 @@ export default function SuccessModalView({
                   <div className="receipt-row" style={{ background: '#f8fafc', padding: '6px 10px', borderRadius: 8, marginTop: 4 }}>
                     <span className="receipt-label">📝 Catatan Khusus</span>
                     <span className="receipt-val" style={{ fontStyle: 'italic', color: '#334155', fontWeight: 600 }}>
-                      "{notesText}"
+                      &quot;{notesText}&quot;
                     </span>
                   </div>
                 ) : null}
@@ -231,7 +232,7 @@ export default function SuccessModalView({
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
-                onClick={onClose}
+                onClick={() => {setShowQrisModal(false);onClose();}}
               >
                 Selesai & Pesan Lagi
               </button>
@@ -330,7 +331,10 @@ export default function SuccessModalView({
                   maxWidth: '100%'
                 }}
               >
-                <img
+                <Image
+                  width={440}
+                  height={660}
+                  unoptimized
                   src="/qris.jpeg"
                   alt="QRIS Pembayaran Ogi Resto"
                   style={{

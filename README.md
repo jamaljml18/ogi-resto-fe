@@ -1,34 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ogi Resto Frontend
 
-## Getting Started
+Frontend Next.js dengan pola Model?View?Presenter.
 
-First, run the development server:
+- Model: API client, sesi admin, katalog, pesanan, laporan kasbon, dan tanggal bisnis.
+- Presenter: koordinasi aplikasi, checkout, jadwal pesanan, dan status pelunasan kasbon bulanan.
+- View: komposisi halaman bersama, komponen pelanggan, serta tab/form admin terpisah.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Menjalankan
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Gunakan npm run dev dari frontend; backend berjalan di port 5000.
+NEXT_PUBLIC_API_URL opsional; default /api memakai rewrite Next.js.
+Untuk hosting terpisah, isi URL backend dengan akhiran /api.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Pelunasan kasbon
 
-## Learn More
+Jalankan backend/migrations/001_kasbon_payments.sql melalui Supabase SQL Editor.
+SUPABASE_KEY backend harus menggunakan service_role untuk tabel pembayaran.
+Jangan gunakan service_role pada environment frontend.
 
-To learn more about Next.js, take a look at the following resources:
+Buka /ogi, login, lalu tab Kasbon. Pilih bulan/tahun tagihan, kemudian aktifkan
+Sudah Bayar setelah bukti pembayaran manual diverifikasi di WhatsApp.
+Pembayaran pada bulan berikutnya tetap dicatat untuk periode tagihan yang dipilih.
+Default false; toggle bisa dimatikan kembali untuk koreksi.
+Cash tidak masuk jumlah kasbon. QRIS tetap berupa gambar statis.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Status baru ditampilkan setelah respons penyimpanan berhasil. Error cloud tidak
+dialihkan menjadi pembayaran lokal. Tanpa konfigurasi Supabase, mode development
+memakai koleksi kasbon_payments pada store JSON.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Identitas sementara memakai nama, perusahaan, dan divisi yang dinormalisasi.
+Perubahan identitas tersebut memerlukan rekonsiliasi; aplikasi belum memiliki ID pegawai.
 
-## Deploy on Vercel
+## Pemeriksaan
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+npm run lint
+npm run build
+npm test
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Token admin kini ditandatangani. Sesi format lama perlu login ulang.

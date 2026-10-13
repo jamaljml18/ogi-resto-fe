@@ -1,26 +1,7 @@
-// -------------------------------------------------------------
-// Ogi Resto - Auth Model (Admin Authentication & Session)
-// -------------------------------------------------------------
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
+import { apiRequest } from './apiClient';
 export const authModel = {
-  // Login admin ke backend
-  async login(username, password) {
-    const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ username, password })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Login gagal, periksa kredensial Anda');
-    }
-    return await res.json();
-  },
-
+  login: (username,password) => apiRequest('/auth/login', { method:'POST', body:{ username,password } }),
+  validateSession: (token,signal) => apiRequest('/admin/session', { token,signal }),
   // Token management
   getToken() {
     if (typeof window === 'undefined') return '';

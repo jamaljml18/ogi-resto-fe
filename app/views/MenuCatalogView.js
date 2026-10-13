@@ -8,6 +8,7 @@ export default function MenuCatalogView({
   activeCategory,
   setActiveCategory,
   filteredMenus,
+  catalogError,
   totalMenusCount,
   cart,
   onAddToCart,
@@ -38,6 +39,7 @@ export default function MenuCatalogView({
       </nav>
 
       <div className="main-content">
+        {catalogError && <p role="alert" className="notice notice-error">{catalogError}</p>}
         {/* Title & Count */}
         <div className="section-title">
           <h2 className="section-title-text">

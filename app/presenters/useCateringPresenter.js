@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
-  INITIAL_MENUS,
   DAYS_LIST,
   PRESET_COMPANIES,
   PRESET_DIVISIONS,
@@ -12,99 +11,20 @@ import {
 import { menuModel } from '../models/menuModel';
 import { orderModel } from '../models/orderModel';
 import { authModel } from '../models/authModel';
+import { useKasbonPresenter } from './useKasbonPresenter';
+import { useOrderSchedulePresenter } from './useOrderSchedulePresenter';
+import {useCustomerOrderPresenter} from './useCustomerOrderPresenter';
 
 export function useCateringPresenter({ initialAdminOpen = false } = {}) {
-  // Mode Pesan: 'today' (Pesan Hari Ini), 'tomorrow' (Pre-Order Besok), 'custom' (Pre-Order Tanggal Pilihan)
-  const [orderMode, setOrderMode] = useState('today');
-
-  const indonesianDays = useMemo(
-    () => ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
-    []
-  );
-
-  // Perhitungan Hari Ini & Besok secara Real-time
-  const { todayName, tomorrowName, todayDateStr, tomorrowDateStr, todayIsoDate, tomorrowIsoDate, defaultCustomIsoDate } = useMemo(() => {
-    const now = new Date();
-    const todayIdx = now.getDay();
-    const tomorrowIdx = (todayIdx + 1) % 7;
-
-    const tDate = new Date(now);
-    tDate.setDate(tDate.getDate() + 1);
-
-    const twoDaysLater = new Date(now);
-    twoDaysLater.setDate(twoDaysLater.getDate() + 2);
-
-    const toIso = (d) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
-
-    return {
-      todayName: indonesianDays[todayIdx],
-      tomorrowName: indonesianDays[tomorrowIdx],
-      todayDateStr: now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-      tomorrowDateStr: tDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-      todayIsoDate: toIso(now),
-      tomorrowIsoDate: toIso(tDate),
-      defaultCustomIsoDate: toIso(twoDaysLater)
-    };
-  }, [indonesianDays]);
-
-  // Tanggal Kustom yang Ditentukan Pengguna (Pre-Order Mandiri)
-  const [customDate, setCustomDate] = useState('');
-
-  // Pastikan customDate terinisialisasi
-  useEffect(() => {
-    if (!customDate && defaultCustomIsoDate) {
-      setCustomDate(defaultCustomIsoDate);
-    }
-  }, [defaultCustomIsoDate, customDate]);
-
-  const { customDayName, customDateStr } = useMemo(() => {
-    const activeDateVal = customDate || defaultCustomIsoDate;
-    if (!activeDateVal) return { customDayName: tomorrowName, customDateStr: tomorrowDateStr };
-    const parts = activeDateVal.split('-');
-    if (parts.length !== 3) return { customDayName: tomorrowName, customDateStr: tomorrowDateStr };
-    const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    const dayIdx = d.getDay();
-    return {
-      customDayName: indonesianDays[dayIdx] || 'Senin',
-      customDateStr: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-    };
-  }, [customDate, defaultCustomIsoDate, indonesianDays, tomorrowName, tomorrowDateStr]);
-
-  const activeSelectedDay =
-    orderMode === 'today'
-      ? todayName
-      : orderMode === 'tomorrow'
-      ? tomorrowName
-      : customDayName;
+  const schedule = useOrderSchedulePresenter();
+  const { orderMode,setOrderMode,todayName,tomorrowName,todayDateStr,tomorrowDateStr,
+    todayIsoDate,tomorrowIsoDate,customDate,setCustomDate,
+    customDayName,customDateStr,activeSelectedDay } = schedule;
 
   // Menus & Filters Pelanggan
-  const [menus, setMenus] = useState(INITIAL_MENUS);
+  const [menus, setMenus] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('Semua');
-
-  // Keranjang
-  const [cart, setCart] = useState({});
-
-  // Modals Pelanggan
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [lastSubmittedOrder, setLastSubmittedOrder] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form Data Diri
-  const [formData, setFormData] = useState({
-    userName: '',
-    company: 'PT Bright Mobile Telecommunication',
-    division: '',
-    location: '',
-    notes: '',
-    paymentMethod: 'Cash'
-  });
 
   // Admin States
   const [showAdminModal, setShowAdminModal] = useState(initialAdminOpen);
@@ -115,16 +35,9 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminActiveTab, setAdminActiveTab] = useState('schedule'); // 'schedule' | 'orders' | 'kasbon'
 
-  // Admin Kasbon States
-  const [kasbonMonth, setKasbonMonth] = useState(new Date().getMonth() + 1);
-  const [kasbonYear, setKasbonYear] = useState(new Date().getFullYear());
-  const [kasbonCompany, setKasbonCompany] = useState('Semua');
-  const [kasbonDivision, setKasbonDivision] = useState('Semua');
-  const [kasbonOrders, setKasbonOrders] = useState([]);
-
   // Admin Schedules
   const [adminScheduleDay, setAdminScheduleDay] = useState('Senin');
-  const [adminAllMenus, setAdminAllMenus] = useState(INITIAL_MENUS);
+  const [adminAllMenus, setAdminAllMenus] = useState([]);
   const [adminSchedules, setAdminSchedules] = useState({});
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
   const [adminScheduleSearch, setAdminScheduleSearch] = useState('');
@@ -168,20 +81,12 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   });
 
   // Helper Toast
+  const toastTimer = useRef(null);
+  useEffect(() => () => clearTimeout(toastTimer.current),[]);
   const showToast = useCallback((msg) => {
+    clearTimeout(toastTimer.current);
     setAdminToast(msg);
-    setTimeout(() => setAdminToast(''), 3500);
-  }, []);
-
-  // Check URL pathname for /ogi trigger if not already opened
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname;
-      const search = window.location.search;
-      if (pathname === '/ogi' || pathname.startsWith('/ogi/') || search.includes('admin')) {
-        setShowAdminModal(true);
-      }
-    }
+    toastTimer.current = setTimeout(() => setAdminToast(''),3500);
   }, []);
 
   // Clock in admin
@@ -190,13 +95,14 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       const now = new Date();
       setClockTime(
         now.toLocaleDateString('id-ID', {
+          timeZone: 'Asia/Jakarta',
           weekday: 'long',
           day: 'numeric',
           month: 'short',
           year: 'numeric'
         }) +
           ' • ' +
-          now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) +
+          now.toLocaleTimeString('id-ID', { hour:'2-digit',minute:'2-digit',timeZone:'Asia/Jakarta' }) +
           ' WIB'
       );
     };
@@ -205,47 +111,62 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-login from saved token
+  const handleApiError = useCallback((error) => {
+    if (error.status === 401) {authModel.clearToken();setAdminToken('');setIsAdminLoggedIn(false);}
+    showToast(error.message || 'Permintaan gagal.');
+  },[showToast]);
+  const kasbon = useKasbonPresenter({token:adminToken,isLoggedIn:isAdminLoggedIn,onError:handleApiError,showToast});
+  const {kasbonOrders} = kasbon;
+  const [catalogError,setCatalogError] = useState('');
+  const [catalogDay,setCatalogDay] = useState('');
+  const catalogReady = catalogDay === activeSelectedDay;
+  const customer = useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule});
+  const {setCart} = customer;
+  const menuRequest = useRef(0);
   useEffect(() => {
-    const savedToken = authModel.getToken();
-    if (savedToken) {
-      setAdminToken(savedToken);
-      setIsAdminLoggedIn(true);
-    }
-  }, []);
+    const token = authModel.getToken();
+    if (!token) return;
+    const controller = new AbortController();
+    authModel.validateSession(token,controller.signal).then(() => {
+      if (!controller.signal.aborted) {setAdminToken(token);setIsAdminLoggedIn(true);}
+    }).catch(error => {if (!controller.signal.aborted) handleApiError(error);});
+    return () => controller.abort();
+  },[handleApiError]);
 
-  // Fetch Menu Pelanggan Berdasarkan Hari Aktif
-  const loadCustomerMenus = useCallback(async (dayToFetch) => {
+  const loadCustomerMenus = useCallback(async (dayToFetch,signal) => {
+    const requestId = ++menuRequest.current;
     try {
-      const data = await menuModel.getMenuForDay(dayToFetch);
-      if (data && Array.isArray(data.menus)) {
-        setMenus(sortMenusNaturally(data.menus));
-      }
-    } catch {
-      // Offline fallback: filter INITIAL_MENUS
-      setMenus(sortMenusNaturally(INITIAL_MENUS));
+      const data = await menuModel.getMenuForDay(dayToFetch,signal);
+      if (signal?.aborted || requestId !== menuRequest.current) return;
+      const list = sortMenusNaturally(data.menus);
+      setMenus(list);setCatalogDay(dayToFetch);setCatalogError('');
+      setCart(prev => Object.fromEntries(Object.entries(prev).filter(([id]) => list.some(menu => menu.id === id))));
+    } catch(error) {
+      if (signal?.aborted || requestId !== menuRequest.current) return;
+      setMenus([]);setCatalogDay('');setCatalogError(error.message || 'Gagal memuat menu.');
     }
-  }, []);
-
+  },[setCart]);
   useEffect(() => {
-    loadCustomerMenus(activeSelectedDay);
-  }, [activeSelectedDay, loadCustomerMenus]);
+    const controller = new AbortController();
+    const timer = setTimeout(() => loadCustomerMenus(activeSelectedDay,controller.signal),0);
+    return () => {clearTimeout(timer);controller.abort();};
+  },[activeSelectedDay,loadCustomerMenus]);
 
   // Load Admin Data (Menus & Schedules)
-  const loadAdminData = useCallback(async () => {
+  const loadAdminData = useCallback(async (signal) => {
     try {
-      const data = await menuModel.getAllMenus(adminToken);
+      const data = await menuModel.getAllMenus(adminToken,signal);
+      if (signal?.aborted) return;
       if (data && Array.isArray(data.menus)) {
         setAdminAllMenus(sortMenusNaturally(data.menus));
         if (data.schedules) {
           setAdminSchedules(data.schedules);
         }
       }
-    } catch {
-      // Offline fallback
-      setAdminAllMenus(sortMenusNaturally(INITIAL_MENUS));
+    } catch(error) {
+      if (!signal?.aborted) handleApiError(error);
     }
-  }, [adminToken]);
+  }, [adminToken,handleApiError]);
 
   // Helper membuat parameter filter pesanan
   const buildOrderFilterParams = useCallback(() => {
@@ -276,51 +197,37 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   }, [adminOrdersSearch, adminOrdersFilter, todayIsoDate]);
 
   // Load Orders History
-  const loadOrdersHistory = useCallback(async () => {
+  const loadOrdersHistory = useCallback(async (signal) => {
     try {
       const filters = buildOrderFilterParams();
-      const data = await orderModel.getOrders(filters, adminToken);
+      const data = await orderModel.getOrders(filters, adminToken,signal);
+      if (signal?.aborted) return;
       if (data && Array.isArray(data.orders)) {
         setOrdersHistory(data.orders);
       }
-    } catch {
-      // Fallback
-      setOrdersHistory([]);
+    } catch(error) {
+      if (!signal?.aborted) {setOrdersHistory([]);handleApiError(error);}
     }
-  }, [buildOrderFilterParams, adminToken]);
-
-  // Load Kasbon Data khusus
-  const loadKasbonData = useCallback(async () => {
-    try {
-      const data = await orderModel.getOrders(
-        {
-          month: kasbonMonth,
-          year: kasbonYear,
-          company: kasbonCompany === 'Semua' ? undefined : kasbonCompany,
-          division: kasbonDivision === 'Semua' ? undefined : kasbonDivision
-        },
-        adminToken
-      );
-      if (data && Array.isArray(data.orders)) {
-        setKasbonOrders(data.orders);
-      }
-    } catch {
-      setKasbonOrders([]);
-    }
-  }, [kasbonMonth, kasbonYear, kasbonCompany, kasbonDivision, adminToken]);
+  }, [buildOrderFilterParams, adminToken,handleApiError]);
 
   useEffect(() => {
-    if (isAdminLoggedIn) {
-      loadAdminData();
-      loadOrdersHistory();
-      loadKasbonData();
-    }
-  }, [isAdminLoggedIn, loadAdminData, loadOrdersHistory, loadKasbonData]);
+    if (!isAdminLoggedIn) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => loadAdminData(controller.signal),0);
+    return () => {clearTimeout(timer);controller.abort();};
+  },[isAdminLoggedIn,loadAdminData]);
+  useEffect(() => {
+    if (!isAdminLoggedIn) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => loadOrdersHistory(controller.signal),250);
+    return () => {clearTimeout(timer);controller.abort();};
+  },[isAdminLoggedIn,loadOrdersHistory]);
 
   // Filter Menu Pelanggan
-  const categories = ['Semua', 'Karbohidrat', 'Sayur', 'Lauk', 'Alat Makan'];
+  const categories = useMemo(() => ['Semua',...new Set(['Karbohidrat','Sayur','Lauk','Alat Makan',...menus.map(m => m.category),...adminAllMenus.map(m => m.category)])],[menus,adminAllMenus]);
 
   const filteredMenus = useMemo(() => {
+    if (!catalogReady) return [];
     const list = menus.filter((item) => {
       const matchCategory =
         activeCategory === 'Semua' || item.category === activeCategory;
@@ -330,133 +237,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       return matchCategory && matchSearch;
     });
     return sortMenusNaturally(list);
-  }, [menus, activeCategory, searchQuery]);
-
-  // Cart Actions
-  const handleAddToCart = (id) => {
-    setCart((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 0) + 1
-    }));
-  };
-
-  const handleRemoveFromCart = (id) => {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (next[id] > 1) {
-        next[id] -= 1;
-      } else {
-        delete next[id];
-      }
-      return next;
-    });
-  };
-
-  const handleClearCart = () => setCart({});
-
-  // Cart Summary
-  const cartSummary = useMemo(() => {
-    let totalItems = 0;
-    let totalPrice = 0;
-    const itemsList = [];
-
-    // Gunakan map master gabungan dari adminAllMenus dan INITIAL_MENUS agar selalu ketemu
-    const allKnownMenusMap = {};
-    INITIAL_MENUS.forEach((m) => {
-      allKnownMenusMap[m.id] = m;
-    });
-    adminAllMenus.forEach((m) => {
-      allKnownMenusMap[m.id] = m;
-    });
-
-    Object.entries(cart).forEach(([id, qty]) => {
-      if (qty > 0) {
-        const item = allKnownMenusMap[id] || menus.find((m) => m.id === id);
-        if (item) {
-          const subtotal = item.price * qty;
-          totalItems += qty;
-          totalPrice += subtotal;
-          itemsList.push({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            qty,
-            subtotal
-          });
-        }
-      }
-    });
-
-    return { totalItems, totalPrice, itemsList };
-  }, [cart, menus, adminAllMenus]);
-
-  // Submit Order Pelanggan
-  const handleSubmitOrder = async (e) => {
-    e.preventDefault();
-    if (cartSummary.totalItems === 0) return;
-
-    setIsSubmitting(true);
-    const chosenScheduleDay =
-      orderMode === 'today'
-        ? todayName
-        : orderMode === 'tomorrow'
-        ? tomorrowName
-        : customDayName;
-
-    const chosenDateStr =
-      orderMode === 'today'
-        ? todayDateStr
-        : orderMode === 'tomorrow'
-        ? tomorrowDateStr
-        : customDateStr;
-
-    const chosenIsoDate =
-      orderMode === 'today'
-        ? todayIsoDate
-        : orderMode === 'tomorrow'
-        ? tomorrowIsoDate
-        : (customDate || defaultCustomIsoDate);
-
-    const payload = {
-      userName: formData.userName,
-      company: formData.company,
-      division: formData.division,
-      location: formData.location,
-      notes: formData.notes || '',
-      paymentMethod: formData.paymentMethod || 'Cash',
-      items: cartSummary.itemsList,
-      totalPrice: cartSummary.totalPrice,
-      orderDay:
-        orderMode === 'today'
-          ? `Hari Ini (${chosenScheduleDay})`
-          : orderMode === 'tomorrow'
-          ? `Besok (${chosenScheduleDay})`
-          : `PO (${chosenScheduleDay})`,
-      orderDate: chosenIsoDate
-    };
-
-    try {
-      const resData = await orderModel.submitOrder(payload);
-      setLastSubmittedOrder(resData.order || payload);
-      setShowCheckoutModal(false);
-      setShowSuccessModal(true);
-      setCart({});
-    } catch {
-      // Fallback lokal jika server offline
-      const fallbackOrder = {
-        ...payload,
-        payment_method: payload.paymentMethod,
-        order_number: 'ORD-' + Date.now(),
-        order_date: new Date().toISOString().split('T')[0]
-      };
-      setLastSubmittedOrder(fallbackOrder);
-      setShowCheckoutModal(false);
-      setShowSuccessModal(true);
-      setCart({});
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  }, [menus, activeCategory, searchQuery,catalogReady]);
 
   // Login Admin
   const handleAdminLogin = async (e) => {
@@ -471,20 +252,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       showToast('🎉 Berhasil masuk ke Panel Admin Ogi Resto!');
       setAdminLoginForm({ username: '', password: '' });
     } catch (err) {
-      // Fallback credential
-      if (
-        adminLoginForm.username === 'admin' &&
-        adminLoginForm.password === 'admin123'
-      ) {
-        const dummyToken = 'demo-token-' + Date.now();
-        setAdminToken(dummyToken);
-        setIsAdminLoggedIn(true);
-        authModel.setToken(dummyToken);
-        showToast('🎉 Masuk dalam Mode Demo Admin!');
-        setAdminLoginForm({ username: '', password: '' });
-      } else {
-        setAdminLoginError(err.message || 'Username atau password salah');
-      }
+      setAdminLoginError(err.message || 'Login gagal.');
     }
   };
 
@@ -529,19 +297,14 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     );
   };
 
-  // Simpan Jadwal Mingguan
   const handleSaveSchedules = async () => {
     setIsSavingSchedule(true);
     try {
-      await menuModel.saveSchedules(adminSchedules, adminToken);
-      showToast(`💾 Jadwal menu berhasil disimpan secara permanen!`);
+      await menuModel.saveSchedules(adminSchedules,adminToken);
+      showToast('Jadwal menu berhasil disimpan.');
       loadCustomerMenus(activeSelectedDay);
-    } catch {
-      showToast(`💾 Jadwal menu tersimpan secara lokal.`);
-      loadCustomerMenus(activeSelectedDay);
-    } finally {
-      setIsSavingSchedule(false);
-    }
+    } catch(error) {handleApiError(error);}
+    finally {setIsSavingSchedule(false);}
   };
 
   // Tambah Menu Baru
@@ -562,16 +325,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       if (res && res.menu) {
         setAdminAllMenus((prev) => sortMenusNaturally([...prev, res.menu]));
       }
-    } catch {
-      const dummyId = 'm-' + Date.now();
-      const dummyMenu = {
-        id: dummyId,
-        name: newMenuForm.name,
-        price: parseInt(newMenuForm.price, 10) || 0,
-        category: newMenuForm.category
-      };
-      setAdminAllMenus((prev) => sortMenusNaturally([...prev, dummyMenu]));
-    }
+    } catch(error) {handleApiError(error);return;}
 
     showToast(`🎉 Menu "${newMenuForm.name}" berhasil ditambahkan!`);
     setShowAddMenuModal(false);
@@ -652,7 +406,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       setShowEditMenuModal(false);
       loadCustomerMenus(activeSelectedDay);
     } catch (err) {
-      showToast('Gagal mengupdate menu: ' + err.message);
+      handleApiError(err);
     }
   };
 
@@ -669,7 +423,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       showToast(`🗑️ Menu "${menu.name}" berhasil dihapus.`);
       loadCustomerMenus(activeSelectedDay);
     } catch (err) {
-      showToast('Gagal menghapus menu: ' + err.message);
+      handleApiError(err);
     }
   };
 
@@ -699,7 +453,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const ordersSummary = useMemo(() => {
     const totalTransactions = ordersHistory.length;
     const totalRevenue = ordersHistory.reduce(
-      (sum, ord) => sum + (ord.total_price || ord.totalPrice || 0),
+      (sum, ord) => sum + (Number(ord.total_price ?? ord.totalPrice) || 0),
       0
     );
     const averageOrderValue =
@@ -710,7 +464,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const totalPortionsSold = useMemo(() => {
     return ordersHistory.reduce((acc, curr) => {
       if (!Array.isArray(curr.items)) return acc;
-      return acc + curr.items.reduce((sum, item) => sum + (item.qty || 1), 0);
+      return acc + curr.items.filter(item => item && !item._meta).reduce((sum,item) => sum + (Number(item.qty) || 0),0);
     }, 0);
   }, [ordersHistory]);
 
@@ -720,7 +474,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     ordersHistory.forEach((ord) => {
       const uName = (ord.user_name || ord.userName || '').trim().toLowerCase();
       const oDate = ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '');
-      const key = `${uName}___${oDate}`;
+      const key = JSON.stringify([uName,ord.company,ord.division,oDate]);
       map[key] = (map[key] || 0) + (Number(ord.total_price || ord.totalPrice) || 0);
     });
     return map;
@@ -731,7 +485,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     ordersHistory.forEach((ord) => {
       const uName = (ord.user_name || ord.userName || '').trim().toLowerCase();
       const oDate = ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '');
-      const key = `${uName}___${oDate}`;
+      const key = JSON.stringify([uName,ord.company,ord.division,oDate]);
       map[key] = (map[key] || 0) + 1;
     });
     return map;
@@ -780,107 +534,9 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [ordersHistory]);
 
-  // Matrix Rekap Kasbon Bulanan (Item 5)
-  const monthlyKasbonMatrix = useMemo(() => {
-    const daysInMonth = new Date(kasbonYear, kasbonMonth, 0).getDate();
-    const MONTH_NAMES = [
-      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    const monthName = MONTH_NAMES[kasbonMonth] || `Bulan ${kasbonMonth}`;
-    const userMap = {};
-
-    kasbonOrders.forEach((ord) => {
-      const uName = (ord.user_name || ord.userName || '').trim();
-      if (!uName) return;
-      if (kasbonDivision !== 'Semua' && ord.division && ord.division.toLowerCase() !== kasbonDivision.toLowerCase()) {
-        return;
-      }
-      const key = `${uName}___${ord.company || ''}___${ord.division || ''}`;
-      if (!userMap[key]) {
-        userMap[key] = {
-          userName: uName,
-          company: ord.company || '-',
-          division: ord.division || '-',
-          location: ord.location || '-',
-          days: {},
-          totalKasbon: 0,
-          totalCash: 0,
-          totalOrdersCount: 0
-        };
-      }
-
-      const ordDate = ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '');
-      let dayNum = 0;
-      if (ordDate) {
-        const parts = ordDate.split('-');
-        dayNum = parseInt(parts[2], 10);
-      }
-
-      const isKasbon = ord.payment_method === 'Kasbon' || ord.paymentMethod === 'Kasbon';
-      const p = Number(ord.total_price || ord.totalPrice) || 0;
-
-      if (dayNum >= 1 && dayNum <= daysInMonth) {
-        if (!userMap[key].days[dayNum]) {
-          userMap[key].days[dayNum] = {
-            hasKasbon: false,
-            hasCash: false,
-            kasbonAmount: 0,
-            cashAmount: 0,
-            orderCount: 0
-          };
-        }
-        userMap[key].days[dayNum].orderCount += 1;
-        if (isKasbon) {
-          userMap[key].days[dayNum].hasKasbon = true;
-          userMap[key].days[dayNum].kasbonAmount += p;
-        } else {
-          userMap[key].days[dayNum].hasCash = true;
-          userMap[key].days[dayNum].cashAmount += p;
-        }
-      }
-
-      if (isKasbon) {
-        userMap[key].totalKasbon += p;
-      } else {
-        userMap[key].totalCash += p;
-      }
-      userMap[key].totalOrdersCount += 1;
-    });
-
-    const userList = Object.values(userMap).sort(
-      (a, b) => b.totalKasbon - a.totalKasbon || a.userName.localeCompare(b.userName)
-    );
-
-    const totalKasbonAmount = userList.reduce((sum, u) => sum + u.totalKasbon, 0);
-    const totalCashAmount = userList.reduce((sum, u) => sum + u.totalCash, 0);
-    const usersWithKasbonCount = userList.filter((u) => u.totalKasbon > 0).length;
-
-    return {
-      monthName,
-      daysInMonth,
-      rows: userList,
-      users: userList,
-      totalUsersCount: userList.length,
-      totalKasbonAmount,
-      totalCashAmount,
-      usersWithKasbonCount
-    };
-  }, [kasbonOrders, kasbonMonth, kasbonYear, kasbonDivision]);
-
-  const handleExportKasbonCsv = () => {
-    const url = orderModel.getExportKasbonCsvUrl(
-      { month: kasbonMonth, year: kasbonYear, company: kasbonCompany, division: kasbonDivision },
-      adminToken
-    );
-    window.open(url, '_blank');
-  };
-
-  // Export CSV
-  const handleExportCsv = () => {
-    const filters = buildOrderFilterParams();
-    const url = orderModel.getExportCsvUrl(filters, adminToken);
-    window.open(url, '_blank');
+  const handleExportCsv = async () => {
+    try {await orderModel.exportCsv(buildOrderFilterParams(),adminToken);}
+    catch(error) {handleApiError(error);}
   };
 
   const handleResetOrdersFilter = () => {
@@ -923,25 +579,9 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     setActiveCategory,
     categories,
     filteredMenus,
-    totalMenusCount: menus.length,
+    totalMenusCount: catalogReady ? menus.length : 0,
 
-    // Cart
-    cart,
-    cartSummary,
-    handleAddToCart,
-    handleRemoveFromCart,
-    handleClearCart,
-
-    // Form Checkout & Modals
-    formData,
-    setFormData,
-    showCheckoutModal,
-    setShowCheckoutModal,
-    showSuccessModal,
-    setShowSuccessModal,
-    lastSubmittedOrder,
-    isSubmitting,
-    handleSubmitOrder,
+    ...customer,
 
     // Admin State & Controls
     showAdminModal,
@@ -1005,19 +645,11 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     userDailyTotals,
     userDailyOrderCounts,
 
-    // Admin Kasbon
-    kasbonMonth,
-    setKasbonMonth,
-    kasbonYear,
-    setKasbonYear,
-    kasbonCompany,
-    setKasbonCompany,
-    kasbonDivision,
-    setKasbonDivision,
+    ...kasbon,
     availableDivisions,
     availableCompanies,
     availableLocations,
-    monthlyKasbonMatrix,
-    handleExportKasbonCsv
+    catalogError,
+    catalogReady
   };
 }

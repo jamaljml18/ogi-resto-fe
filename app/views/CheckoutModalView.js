@@ -17,6 +17,7 @@ export default function CheckoutModalView({
   setFormData,
   onSubmitOrder,
   isSubmitting,
+  checkoutError,
   availableCompanies,
   availableDivisions,
   availableLocations
@@ -34,6 +35,7 @@ export default function CheckoutModalView({
         </div>
 
         <div className="modal-body">
+          {checkoutError && <p role="alert" className="notice notice-error">{checkoutError}</p>}
           {/* Review Pesanan */}
           <div className="review-box">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, fontSize: 13 }}>
@@ -271,7 +273,7 @@ export default function CheckoutModalView({
             type="submit"
             form="orderForm"
             className="btn-primary"
-            disabled={isSubmitting}
+            disabled={isSubmitting || cartSummary.totalItems === 0}
           >
             {isSubmitting ? 'Memproses Pesanan...' : '✓ Konfirmasi & Kirim Pesanan'}
           </button>
