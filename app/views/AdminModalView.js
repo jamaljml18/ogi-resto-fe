@@ -3,6 +3,7 @@
 import React from 'react';
 import AdminScheduleView from './admin/AdminScheduleView';
 import AdminOrdersView from './admin/AdminOrdersView';
+import AdminPaymentHistoryView from './admin/AdminPaymentHistoryView';
 import AdminKasbonView from './admin/AdminKasbonView';
 import AdminLoginView from './admin/AdminLoginView';
 import AdminEditMenuView from './admin/AdminEditMenuView';
@@ -105,6 +106,13 @@ export default function AdminModalView(props) {
                     {monthlyKasbonMatrix?.usersWithKasbonCount || 0}
                   </span>
                 </button>
+                <button
+                  type="button"
+                  className={`admin-pill-tab ${adminActiveTab === 'payments' ? 'active' : ''}`}
+                  onClick={() => setAdminActiveTab('payments')}
+                >
+                  <span>🧾 Riwayat Pembayaran</span>
+                </button>
               </div>
             </div>
 
@@ -119,6 +127,8 @@ export default function AdminModalView(props) {
             {adminActiveTab === 'orders' && (
                 <AdminOrdersView {...props} />
             )}
+
+            {adminActiveTab === 'payments' && <AdminPaymentHistoryView {...props} />}
 
             {/* TAB 3: REKAP KASBON BULANAN */}
             {adminActiveTab === 'kasbon' && (

@@ -11,6 +11,7 @@ import {
 import { menuModel } from '../models/menuModel';
 import { orderModel } from '../models/orderModel';
 import { authModel } from '../models/authModel';
+import { usePaymentHistoryPresenter } from './usePaymentHistoryPresenter';
 import { useKasbonPresenter } from './useKasbonPresenter';
 import { useOrderSchedulePresenter } from './useOrderSchedulePresenter';
 import {useCustomerOrderPresenter} from './useCustomerOrderPresenter';
@@ -33,7 +34,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
   const [adminLoginError, setAdminLoginError] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
-  const [adminActiveTab, setAdminActiveTab] = useState('schedule'); // 'schedule' | 'orders' | 'kasbon'
+  const [adminActiveTab, setAdminActiveTab] = useState('schedule'); // 'schedule' | 'orders' | 'kasbon' | 'payments'
 
   // Admin Schedules
   const [adminScheduleDay, setAdminScheduleDay] = useState('Senin');
@@ -116,6 +117,10 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     showToast(error.message || 'Permintaan gagal.');
   },[showToast]);
   const kasbon = useKasbonPresenter({token:adminToken,isLoggedIn:isAdminLoggedIn,onError:handleApiError,showToast});
+  const paymentHistoryPresenter = usePaymentHistoryPresenter({
+    token: adminToken, active: isAdminLoggedIn && showAdminModal && adminActiveTab === 'payments',
+    onError: handleApiError, showToast
+  });
   const {kasbonOrders} = kasbon;
   const [catalogError,setCatalogError] = useState('');
   const [catalogDay,setCatalogDay] = useState('');
@@ -645,6 +650,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     userDailyOrderCounts,
 
     ...kasbon,
+    ...paymentHistoryPresenter,
     availableDivisions,
     availableCompanies,
     availableLocations,

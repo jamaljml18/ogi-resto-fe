@@ -210,19 +210,19 @@ export default function AdminScheduleView({todayName,adminScheduleDay,setAdminSc
                               <div className="admin-action-group" style={{ justifyContent: 'center' }}>
                                 <button
                                   type="button"
-                                  className="btn-action-edit"
+                                  className="admin-row-action admin-row-action-edit"
                                   onClick={() => onOpenEditModal(m)}
                                   title={`Edit data menu ${m.name}`}
                                 >
-                                  ✏️ Edit
+                                  <span className="admin-row-action-icon" aria-hidden="true">✏️</span><span>Edit</span>
                                 </button>
                                 <button
                                   type="button"
-                                  className="btn-action-delete"
+                                  className="admin-row-action admin-row-action-delete"
                                   onClick={() => onDeleteMenu(m)}
                                   title={`Hapus menu ${m.name}`}
                                 >
-                                  🗑️ Hapus
+                                  <span className="admin-row-action-icon" aria-hidden="true">🗑️</span><span>Hapus</span>
                                 </button>
                               </div>
                             </td>
