@@ -61,11 +61,11 @@ export default function AdminKasbonView({kasbonMonth,setKasbonMonth,kasbonYear,s
                       💵
                     </div>
                     <div className="stat-info">
-                      <span className="stat-label">TOTAL CASH / QRIS</span>
+                      <span className="stat-label">TOTAL CASH / TRANSFER</span>
                       <div className="stat-val" style={{ color: '#059669' }}>
                         {formatRupiah(monthlyKasbonMatrix?.totalCashAmount || 0)}
                       </div>
-                      <div className="stat-subtext">Transaksi dengan metode Cash / QRIS</div>
+                      <div className="stat-subtext">Transaksi dengan metode Cash / Transfer</div>
                     </div>
                   </div>
 

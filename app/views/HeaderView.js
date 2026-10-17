@@ -2,19 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
+import BankAccountDetails from './BankAccountDetails';
 
 export default function HeaderView({ searchQuery, setSearchQuery }) {
-  const [showQris, setShowQris] = useState(false);
+  const [showBankAccount, setShowBankAccount] = useState(false);
 
   useEffect(() => {
-    if (!showQris) return;
+    if (!showBankAccount) return;
     const closeOnEscape = (event) => {
-      if (event.key === 'Escape') setShowQris(false);
+      if (event.key === 'Escape') setShowBankAccount(false);
     };
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [showQris]);
+  }, [showBankAccount]);
 
   return (
     <>
@@ -41,12 +41,12 @@ export default function HeaderView({ searchQuery, setSearchQuery }) {
             </a>
             <button
               type="button"
-              className="btn-qris-header"
-              onClick={() => setShowQris(true)}
+              className="btn-bank-header"
+              onClick={() => setShowBankAccount(true)}
               aria-haspopup="dialog"
-              aria-expanded={showQris}
+              aria-expanded={showBankAccount}
             >
-              <span aria-hidden="true">▦</span> Lihat QRIS
+              <span aria-hidden="true">🏦</span> Lihat No. Rek
             </button>
           </div>
         </div>
@@ -82,27 +82,20 @@ export default function HeaderView({ searchQuery, setSearchQuery }) {
           </div>
         </div>
       </header>
-      {showQris && createPortal(
-        <div className="qris-preview-overlay" onClick={() => setShowQris(false)}>
+      {showBankAccount && createPortal(
+        <div className="bank-preview-overlay" onClick={() => setShowBankAccount(false)}>
           <div
-            className="qris-preview-dialog"
+            className="bank-preview-dialog"
             role="dialog"
             aria-modal="true"
-            aria-label="QRIS pembayaran Ogi Resto"
+            aria-label="Rekening pembayaran Ogi Resto"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="qris-preview-header">
-              <strong>QRIS Pembayaran</strong>
-              <button type="button" onClick={() => setShowQris(false)} aria-label="Tutup QRIS" autoFocus>×</button>
+            <div className="bank-preview-header">
+              <strong>Rekening Pembayaran</strong>
+              <button type="button" onClick={() => setShowBankAccount(false)} aria-label="Tutup rekening" autoFocus>×</button>
             </div>
-            <Image
-              src="/qris.jpeg"
-              alt="Kode QRIS pembayaran Ogi Resto"
-              width={440}
-              height={660}
-              unoptimized
-              className="qris-preview-image"
-            />
+            <BankAccountDetails />
           </div>
         </div>,
         document.body

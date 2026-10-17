@@ -2290,7 +2290,7 @@ body {
   transform: scale(0.98);
 }
 
-.btn-qris-header {
+.btn-bank-header {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2306,9 +2306,9 @@ body {
   cursor: pointer;
 }
 
-.btn-qris-header:hover { background: #bae6fd; }
+.btn-bank-header:hover { background: #bae6fd; }
 
-.qris-preview-overlay {
+.bank-preview-overlay {
   position: fixed;
   inset: 0;
   z-index: 1300;
@@ -2320,7 +2320,7 @@ body {
   backdrop-filter: blur(6px);
 }
 
-.qris-preview-dialog {
+.bank-preview-dialog {
   width: min(100%, 360px);
   max-height: calc(100dvh - 32px);
   overflow: auto;
@@ -2329,7 +2329,7 @@ body {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
 }
 
-.qris-preview-header {
+.bank-preview-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2338,22 +2338,12 @@ body {
   background: #0369a1;
 }
 
-.qris-preview-header button {
+.bank-preview-header button {
   border: 0;
   background: transparent;
   color: inherit;
   font-size: 26px;
   cursor: pointer;
-}
-
-.qris-preview-image {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: calc(100% - 24px);
-  max-height: calc(100dvh - 100px);
-  margin: 12px auto;
-  border-radius: 10px;
 }
 
 .floating-whatsapp-btn {
@@ -2446,7 +2436,7 @@ body {
     border-radius: 9999px;
   }
 
-  .btn-qris-header {
+  .btn-bank-header {
     padding: 6px 11px;
     font-size: 11.5px;
   }
@@ -2690,7 +2680,7 @@ body {
     z-index: 95;
   }
 
-  /* 7. Modal Sheets (Checkout, Success, QRIS) */
+  /* 7. Modal Sheets (Checkout, Success, Rekening) */
   .modal-overlay {
     padding: 0;
     align-items: flex-end;
@@ -3091,8 +3081,8 @@ body {
 
 .btn-whatsapp-header { background: #24745b; box-shadow: 0 4px 12px rgba(36, 116, 91, 0.18); }
 .btn-whatsapp-header:hover { background: #195d48; box-shadow: 0 6px 16px rgba(36, 116, 91, 0.22); }
-.btn-qris-header { background: #fbf5eb; border-color: #d6c3a3; color: #654b33; }
-.btn-qris-header:hover { background: #f3e7d3; }
+.btn-bank-header { background: #fbf5eb; border-color: #d6c3a3; color: #654b33; }
+.btn-bank-header:hover { background: #f3e7d3; }
 
 .category-pill {
   background: #fffdf9;
@@ -3162,7 +3152,7 @@ body {
 
 .modal-sheet,
 .admin-login-card,
-.qris-preview-dialog { background: var(--card-bg); }
+.bank-preview-dialog { background: var(--card-bg); }
 .modal-header { background: #fbf7f1; }
 .form-input { background: #fffdf9; border-color: var(--border-card); }
 .review-box,
@@ -3372,4 +3362,42 @@ body {
   .payment-history-delete-confirm { padding: 16px; }
   .payment-history-delete-confirm .payment-history-row-actions { width: 100%; }
   .payment-history-delete-confirm .payment-history-row-actions > button { flex: 1; }
+}
+
+/* Shared bank account details for header and receipt payment dialogs. */
+.bank-account-details {
+  margin: 16px;
+  padding: clamp(20px, 5vw, 28px) 16px;
+  border: 1px solid #d6c3a3;
+  border-radius: 16px;
+  background: #fffaf2;
+  color: #3d3027;
+  text-align: center;
+}
+.bank-account-details p { margin: 0; }
+.bank-account-details .bank-account-label {
+  color: #746557;
+  font-size: 12px;
+  font-weight: 600;
+}
+.bank-account-details .bank-account-number {
+  margin-top: 10px;
+  font-size: clamp(24px, 7vw, 32px);
+  line-height: 1.3;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  user-select: all;
+}
+.bank-account-details .bank-account-bank {
+  margin-top: 12px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #075985;
+}
+.bank-account-details .bank-account-holder {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }

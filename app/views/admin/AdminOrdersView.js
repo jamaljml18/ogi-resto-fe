@@ -487,7 +487,7 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                                       gap: 4
                                     }}
                                   >
-                                    💵 Cash / QRIS
+                                    💵 Cash / Transfer
                                   </span>
                                 )}
                               </td>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import BankAccountDetails from './BankAccountDetails';
 import { formatRupiah } from '../models/initialData';
 
 export default function SuccessModalView({
@@ -9,7 +9,7 @@ export default function SuccessModalView({
   onClose,
   lastSubmittedOrder
 }) {
-  const [showQrisModal, setShowQrisModal] = useState(false);
+  const [showBankAccountModal, setShowBankAccountModal] = useState(false);
 
   if (!isOpen) return null;
 
@@ -72,7 +72,7 @@ export default function SuccessModalView({
                           fontSize: 12.5
                         }}
                       >
-                        💵 Cash / QRIS
+                        💵 Cash / Transfer
                       </span>
                     )}
                   </span>
@@ -132,11 +132,11 @@ export default function SuccessModalView({
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
-              {/* JIKA CASH: TAMPILKAN TOMBOL PAY / BAYAR QRIS */}
+              {/* JIKA CASH: TAMPILKAN TOMBOL PAY / BUKA REKENING */}
               {lastSubmittedOrder && !isKasbon && (
                 <button
                   type="button"
-                  onClick={() => setShowQrisModal(true)}
+                  onClick={() => setShowBankAccountModal(true)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -156,7 +156,7 @@ export default function SuccessModalView({
                   }}
                 >
                   <span style={{ fontSize: 18 }}>💳</span>
-                  <span>Bayar Sekarang (Buka QRIS)</span>
+                  <span>Bayar Sekarang (Buka Rekening)</span>
                 </button>
               )}
 
@@ -186,7 +186,7 @@ export default function SuccessModalView({
                     `• Nama: ${lastSubmittedOrder.userName || lastSubmittedOrder.user_name}\n` +
                     `• PT / Divisi: ${lastSubmittedOrder.company || '-'} / ${lastSubmittedOrder.division || '-'}\n` +
                     `• Lokasi: ${lastSubmittedOrder.location || '-'}\n` +
-                    `• Metode: ${isKasbon ? 'Kasbon (Bayar Nanti)' : 'Cash / QRIS'}\n` +
+                    `• Metode: ${isKasbon ? 'Kasbon (Bayar Nanti)' : 'Cash / Transfer'}\n` +
                     (notesText ? `• Catatan: ${notesText}\n` : '') +
                     `• Total: ${formatRupiah(lastSubmittedOrder.totalPrice || lastSubmittedOrder.total_price)}`
                   )}`}
@@ -232,7 +232,7 @@ export default function SuccessModalView({
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
-                onClick={() => {setShowQrisModal(false);onClose();}}
+                onClick={() => {setShowBankAccountModal(false);onClose();}}
               >
                 Selesai & Pesan Lagi
               </button>
@@ -241,12 +241,12 @@ export default function SuccessModalView({
         </div>
       </div>
 
-      {/* POPUP MODAL QRIS PEMBAYARAN */}
-      {showQrisModal && (
+      {/* POPUP MODAL REKENING PEMBAYARAN */}
+      {showBankAccountModal && (
         <div
           className="modal-overlay"
           style={{ zIndex: 1200, background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)' }}
-          onClick={() => setShowQrisModal(false)}
+          onClick={() => setShowBankAccountModal(false)}
         >
           <div
             className="modal-sheet"
@@ -275,13 +275,13 @@ export default function SuccessModalView({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 22 }}>📱</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>QRIS Pembayaran</h3>
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Rekening Pembayaran</h3>
                   <p style={{ margin: '1px 0 0 0', fontSize: 11, opacity: 0.9 }}>Ogi Resto Catering</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowQrisModal(false)}
+                onClick={() => setShowBankAccountModal(false)}
                 style={{
                   background: 'rgba(255,255,255,0.2)',
                   border: 'none',
@@ -319,66 +319,16 @@ export default function SuccessModalView({
                 </div>
               </div>
 
-              {/* GAMBAR QRIS (Disesuaikan agar tidak terpotong di layar HP) */}
-              <div
-                style={{
-                  background: '#ffffff',
-                  padding: 8,
-                  borderRadius: 14,
-                  border: '1.5px solid #e2e8f0',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
-                  display: 'inline-block',
-                  maxWidth: '100%'
-                }}
-              >
-                <Image
-                  width={440}
-                  height={660}
-                  unoptimized
-                  src="/qris.jpeg"
-                  alt="QRIS Pembayaran Ogi Resto"
-                  style={{
-                    maxWidth: 220,
-                    width: '100%',
-                    height: 'auto',
-                    maxHeight: '44vh',
-                    objectFit: 'contain',
-                    borderRadius: 8,
-                    display: 'block',
-                    margin: '0 auto'
-                  }}
-                />
-              </div>
+              <BankAccountDetails />
 
               <p style={{ fontSize: 11.5, color: '#475569', lineHeight: 1.45, marginTop: 10, marginBottom: 12 }}>
-                Scan QRIS di atas menggunakan <strong>GoPay, OVO, Dana, ShopeePay, BCA Mobile</strong>, atau aplikasi m-Banking Anda.
+                Transfer ke rekening BCA di atas melalui aplikasi perbankan Anda. Pastikan nama penerima sesuai sebelum mengirim pembayaran.
               </p>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <a
-                  href="/qris.jpeg"
-                  download="QRIS_Ogi_Resto.jpeg"
-                  style={{
-                    flex: 1,
-                    background: '#f1f5f9',
-                    color: '#334155',
-                    padding: '11px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    border: '1px solid #cbd5e1'
-                  }}
-                >
-                  📥 Simpan QR
-                </a>
                 <button
                   type="button"
-                  onClick={() => setShowQrisModal(false)}
+                  onClick={() => setShowBankAccountModal(false)}
                   style={{
                     flex: 1,
                     background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',

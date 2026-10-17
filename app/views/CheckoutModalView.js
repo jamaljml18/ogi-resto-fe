@@ -175,7 +175,7 @@ export default function CheckoutModalView({
                     color: (formData.paymentMethod || 'Cash') === 'Cash' ? '#16a34a' : '#d97706'
                   }}
                 >
-                  {(formData.paymentMethod || 'Cash') === 'Cash' ? '✓ Bayar Cash / QRIS' : '✓ Dicatat Kasbon'}
+                  {(formData.paymentMethod || 'Cash') === 'Cash' ? '✓ Bayar Cash / Transfer' : '✓ Dicatat Kasbon'}
                 </span>
               </label>
 
@@ -215,7 +215,7 @@ export default function CheckoutModalView({
                 >
                   <span style={{ fontSize: 18 }}>💵</span>
                   <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
-                    <div>Cash / QRIS</div>
+                    <div>Cash / Transfer</div>
                     <small style={{ fontSize: 10.5, fontWeight: 500, color: (formData.paymentMethod || 'Cash') === 'Cash' ? '#16a34a' : '#94a3b8' }}>
                       Bayar Sekarang
                     </small>
@@ -261,7 +261,7 @@ export default function CheckoutModalView({
                 </div>
               ) : (
                 <div style={{ marginTop: 8, fontSize: 11.5, color: '#15803d', background: '#f0fdf4', padding: '8px 12px', borderRadius: 8, border: '1px solid #dcfce7' }}>
-                  💡 Pada struk nanti akan tersedia tombol untuk membuka QRIS pembayaran.
+                  💡 Pada struk nanti akan tersedia tombol untuk membuka Nomer Rekenening.
                 </div>
               )}
             </div>
