@@ -35,3 +35,14 @@ test('Query filters encode names and omit all-values markers',()=>{
   assert.equal(new URLSearchParams(query).get('company'),'PT A & B');
   assert.equal(new URLSearchParams(query).has('division'),false);
 });
+
+test('Daily totals use all three case-insensitive identity fields and retain date separation',async()=>{
+ const {orderDailyIdentity,uniqueIdentityValues}=await sourceModule('identityModel.js');
+ const a={user_name:' Hanan ',company:'PT Contoh',division:'HR',order_date:'2026-10-25'};
+ const b={user_name:'hanan',company:'pt contoh',division:'hr',order_date:'2026-10-25'};
+ assert.equal(orderDailyIdentity(a),orderDailyIdentity(b));
+ assert.notEqual(orderDailyIdentity(a),orderDailyIdentity({...b,division:'IT'}));
+ assert.notEqual(orderDailyIdentity(a),orderDailyIdentity({...b,order_date:'2026-10-26'}));
+ assert.deepEqual(uniqueIdentityValues(['HR','hr',' Hr ','QA']),['HR','QA']);
+ assert.equal(a.user_name,' Hanan ');
+});

@@ -9,6 +9,7 @@ import {
   sortMenusNaturally
 } from '../models/initialData';
 import { menuModel } from '../models/menuModel';
+import { orderDailyIdentity, uniqueIdentityValues } from '../models/identityModel';
 import { orderModel } from '../models/orderModel';
 import { authModel } from '../models/authModel';
 import { usePaymentHistoryPresenter } from './usePaymentHistoryPresenter';
@@ -493,9 +494,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const userDailyTotals = useMemo(() => {
     const map = {};
     ordersHistory.forEach((ord) => {
-      const uName = (ord.user_name || ord.userName || '').trim().toLowerCase();
-      const oDate = ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '');
-      const key = JSON.stringify([uName,ord.company,ord.division,oDate]);
+      const key = orderDailyIdentity(ord);
       map[key] = (map[key] || 0) + (Number(ord.total_price || ord.totalPrice) || 0);
     });
     return map;
@@ -504,9 +503,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const userDailyOrderCounts = useMemo(() => {
     const map = {};
     ordersHistory.forEach((ord) => {
-      const uName = (ord.user_name || ord.userName || '').trim().toLowerCase();
-      const oDate = ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '');
-      const key = JSON.stringify([uName,ord.company,ord.division,oDate]);
+      const key = orderDailyIdentity(ord);
       map[key] = (map[key] || 0) + 1;
     });
     return map;
@@ -525,7 +522,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
         set.add(o.division.trim());
       }
     });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return uniqueIdentityValues([...set]);
   }, [ordersHistory, kasbonOrders]);
 
   // Daftar perusahaan gabungan: preset default + perusahaan yang ada di database transaksi
@@ -541,7 +538,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
         set.add(o.company.trim());
       }
     });
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
+    return uniqueIdentityValues([...set]);
   }, [ordersHistory, kasbonOrders]);
 
   // Daftar lokasi pengantaran gabungan

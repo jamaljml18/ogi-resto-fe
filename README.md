@@ -154,3 +154,11 @@ Sebelum dipakai online, set NEXT_PUBLIC_API_URL ke backend publik dan build ulan
 
 Folder out diabaikan Git. Jangan mengunggah .next, .env.local atau service key.
 Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk frontend, API Vercel, dan penempatan bot.
+
+## Pencocokan identitas tanpa membedakan huruf besar-kecil
+
+Nama, perusahaan dan divisi dicocokkan tanpa membedakan kapital, misalnya Hanan/hanan,
+PT Contoh/pt contoh dan HR/hr. Penulisan asli tetap ditampilkan. Filter, akumulasi harian,
+ringkasan, CSV, kasbon dan pencocokan laporan WA menggunakan aturan tersebut.
+Perusahaan/divisi/tanggal yang berbeda tetap dipisahkan. Kunci pelunasan lama tidak diubah,
+dan laporan pembayaran terpisah tidak dihapus atau digabung secara fisik.

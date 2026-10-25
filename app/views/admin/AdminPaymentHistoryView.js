@@ -1,5 +1,6 @@
 'use client';
 import AdminTableViewport from './AdminTableViewport';
+import { uniqueIdentityValues } from '../../models/identityModel';
 
 import { useEffect, useRef } from 'react';
 import { dateLabel } from '../../models/dateModel';
@@ -101,8 +102,8 @@ export default function AdminPaymentHistoryView({
       <PaymentHistoryFilters
         filters={historyFilters} setFilters={setHistoryFilters} onApply={applyHistoryFilters}
         onReset={resetHistoryFilters} error={historyFilterError} pending={paymentHistoryPending}
-        availableCompanies={[...new Set([...availableCompanies, ...paymentHistory.map(row => row.company)].filter(Boolean))].sort()}
-        availableDivisions={[...new Set([...availableDivisions, ...paymentHistory.map(row => row.division)].filter(Boolean))].sort()}
+        availableCompanies={uniqueIdentityValues([...availableCompanies, ...paymentHistory.map(row => row.company)])}
+        availableDivisions={uniqueIdentityValues([...availableDivisions, ...paymentHistory.map(row => row.division)])}
       />
 
       {historyError && <p className="payment-history-error" role="alert">{historyError}</p>}

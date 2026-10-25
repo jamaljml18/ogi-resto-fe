@@ -1,5 +1,6 @@
 'use client';
 import AdminTableViewport from './AdminTableViewport';
+import { orderDailyIdentity } from '../../models/identityModel';
 import {DAYS_LIST,formatRupiah,PRESET_COMPANIES,PRESET_DIVISIONS,PRESET_LOCATIONS} from '../../models/initialData';
 
 export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations,openOrderEditor}) {
@@ -420,10 +421,7 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                           const paymentMethod = ord.payment_method || ord.paymentMethod || 'Cash';
                           const isKasbon = paymentMethod === 'Kasbon';
                           const notes = ord.notes || '';
-                          const userKey = JSON.stringify([
-                            (ord.user_name || ord.userName || '').trim().toLowerCase(),
-                            ord.company,ord.division,ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '')
-                          ]);
+                          const userKey = orderDailyIdentity(ord);
                           const dailyTotal = ordersCompact ? ord.total_price : (userDailyTotals && userDailyTotals[userKey]) || (ord.total_price || ord.totalPrice);
                           const orderCount = ordersCompact ? ord.order_count : (userDailyOrderCounts && userDailyOrderCounts[userKey]) || 1;
 
