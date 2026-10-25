@@ -38,7 +38,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
   const [adminLoginError, setAdminLoginError] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
-  const [adminActiveTab, setAdminActiveTab] = useState('schedule'); // 'schedule' | 'orders' | 'kasbon' | 'payments'
+  const [adminActiveTab, setAdminActiveTab] = useState('orders'); // 'schedule' | 'orders' | 'waiting' | 'kasbon' | 'payments'
 
   // Admin Schedules
   const [adminScheduleDay, setAdminScheduleDay] = useState('Senin');
@@ -130,7 +130,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const {kasbonOrders} = kasbon;
   const [catalogError,setCatalogError] = useState('');
   const [catalogDay,setCatalogDay] = useState('');
-  const catalogReady = catalogDay === activeSelectedDay;
+  const catalogReady = Boolean(activeSelectedDay) && catalogDay === activeSelectedDay;
   const pendingPayment = usePendingPaymentPresenter({ restore: !initialAdminOpen });
   const customer = useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule,
     onWaitingOrder: pendingPayment.trackWaitingOrder, waitingForPayment: Boolean(pendingPayment.pendingOrder)});
@@ -161,6 +161,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   },[setCart]);
   useEffect(() => {
     const controller = new AbortController();
+    if (!activeSelectedDay) return;
     const timer = setTimeout(() => loadCustomerMenus(activeSelectedDay,controller.signal),0);
     return () => {clearTimeout(timer);controller.abort();};
   },[activeSelectedDay,loadCustomerMenus]);
@@ -209,18 +210,27 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     return filters;
   }, [adminOrdersSearch, adminOrdersFilter, todayIsoDate]);
 
-  // Load Orders History
-  const loadOrdersHistory = useCallback(async (signal) => {
+  // Only the latest request may publish results after filter/session changes.
+  const ordersRequest = useRef(0);
+  const [ordersRefresh, setOrdersRefresh] = useState(0);
+  const [ordersHistoryError, setOrdersHistoryError] = useState('');
+  const refreshOrdersHistory = useCallback(() => setOrdersRefresh(value => value + 1), []);
+  const loadOrdersHistory = useCallback(async (signal, quiet = false) => {
+    const request = ++ordersRequest.current;
     try {
       const filters = buildOrderFilterParams();
       const data = await orderModel.getOrders(filters, adminToken,signal);
-      if (signal?.aborted) return;
+      if (signal?.aborted || request !== ordersRequest.current) return;
+      setOrdersHistoryError('');
       if (data && Array.isArray(data.orders)) {
         setOrdersHistory(data.orders);
         setOrdersGroupedHistory(Array.isArray(data.groupedOrders) ? data.groupedOrders : []);
       }
     } catch(error) {
-      if (!signal?.aborted) {setOrdersHistory([]);setOrdersGroupedHistory([]);handleApiError(error);}
+      if (!signal?.aborted && request === ordersRequest.current) {
+        setOrdersHistoryError(error.message || 'Gagal memperbarui pesanan.');
+        if (!quiet || error.status === 401) handleApiError(error);
+      }
     }
   }, [buildOrderFilterParams, adminToken,handleApiError]);
 
@@ -242,9 +252,32 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   useEffect(() => {
     if (!isAdminLoggedIn) return;
     const controller = new AbortController();
-    const timer = setTimeout(() => loadOrdersHistory(controller.signal),250);
-    return () => {clearTimeout(timer);controller.abort();};
-  },[isAdminLoggedIn,loadOrdersHistory]);
+    const active = showAdminModal && adminActiveTab === 'orders';
+    let disposed = false, loading = false, timer;
+    async function load(quiet = false) {
+      if (disposed || loading) return;
+      clearTimeout(timer);
+      loading = true;
+      try { await loadOrdersHistory(controller.signal, quiet); }
+      finally {
+        loading = false;
+        if (!disposed && active && !document.hidden) timer = setTimeout(() => load(true), 5000);
+      }
+    }
+    function resume() {
+      clearTimeout(timer);
+      if (active && !document.hidden) void load(true);
+    }
+    timer = setTimeout(() => load(), 250);
+    document.addEventListener('visibilitychange', resume);
+    window.addEventListener('online', resume);
+    return () => {
+      disposed = true; clearTimeout(timer); controller.abort();
+      ordersRequest.current += 1;
+      document.removeEventListener('visibilitychange', resume);
+      window.removeEventListener('online', resume);
+    };
+  },[isAdminLoggedIn,showAdminModal,adminActiveTab,loadOrdersHistory,ordersRefresh]);
 
   // Filter Menu Pelanggan
   const categories = useMemo(() => ['Semua',...new Set(['Karbohidrat','Sayur','Lauk','Alat Makan',...menus.map(m => m.category),...adminAllMenus.map(m => m.category)])],[menus,adminAllMenus]);
@@ -270,6 +303,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     try {
       const data = await authModel.login(adminLoginForm.username, adminLoginForm.password);
       setAdminToken(data.token);
+      setAdminActiveTab('orders');
       setIsAdminLoggedIn(true);
       authModel.setToken(data.token);
       showToast('🎉 Berhasil masuk ke Panel Admin Ogi Resto!');
@@ -655,6 +689,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     ordersSummary,
     totalPortionsSold,
     ordersHistory, ordersGroupedHistory, ordersCompact, setOrdersCompact,
+    refreshOrdersHistory, ordersHistoryError,
     adminOrdersSearch,
     setAdminOrdersSearch,
     adminOrdersFilter,

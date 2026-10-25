@@ -166,8 +166,8 @@ dan laporan pembayaran terpisah tidak dihapus atau digabung secara fisik.
 ## Animasi sambutan pelanggan
 
 WelcomeIntro menampilkan pembuka singkat Ogi Resto dengan ilustrasi SVG/CSS dan transisi
-ke halaman menu. Tampil sekali per sesi tab, memakai sessionStorage ogi_welcome_seen_v1,
-dapat dilewati melalui Lewati/Lihat Menu/Escape, dan tertutup otomatis sekitar dua detik.
+ke halaman menu. Tampil setiap halaman pelanggan dibuka atau di-refresh, dengan durasi
+sekitar enam detik di desktop maupun mobile. Dapat dilewati melalui Lewati/Lihat Menu/Escape.
 Tidak bergantung pada koneksi API atau menampilkan progress loading palsu.
 
 Route admin /ogi tidak menampilkan pembuka. Browser dengan prefers-reduced-motion atau
@@ -175,5 +175,18 @@ pending pembayaran tersimpan juga langsung masuk halaman. Background dibuat iner
 scroll dikunci hanya selama pembuka; fokus/scroll dipulihkan sesudahnya.
 Animasi halaman menu ringan dan mengikuti pengaturan reduced-motion.
 
-Refresh pada sesi tab yang sama tidak mengulang pembuka; gunakan sesi browser baru untuk
-melihat pengalaman kunjungan pertama. Build ulang out setelah mengubah tampilan.
+Build ulang out setelah mengubah tampilan atau durasi pembuka.
+
+## Pembaruan riwayat pesanan admin
+
+Tab Pesanan & CSV mengambil data terbaru melalui API setiap 5 detik selama tab aktif dan halaman browser terlihat. Pembaruan mengikuti filter serta mode ringkasan yang dipilih. Tombol Muat Ulang tersedia untuk mengambil data lebih cepat. Polling berhenti saat tab ditinggalkan, halaman disembunyikan, atau admin keluar; dilanjutkan saat halaman terlihat/koneksi online kembali. Respons lama tidak menimpa permintaan filter terbaru. Jika koneksi gagal, data terakhir dipertahankan dengan pemberitahuan. Ini menggunakan polling, bukan koneksi realtime Supabase langsung.
+
+## Nama perusahaan PT BMT
+
+Nama perusahaan standar adalah **PT BMT**. Penulisan `pt bmt`, nama lama `PT Bright Mobile Telecommunication`, serta ejaan `PT Bright Mobile Telecommuncation` dikenali tanpa membedakan huruf besar/kecil dan disimpan sebagai PT BMT. Form pelanggan dan caption WhatsApp menggunakan nama pendek ini. Parser pembayaran yang sama dipakai oleh bot grup, webhook Meta, dan input manual.
+
+Jalankan migrasi `backend/migrations/008_company_bmt.sql` (pada folder backend: `migrations/008_company_bmt.sql`) setelah 001?007 untuk menyeragamkan data Supabase lama dan kunci rekap kasbon. Hentikan backend/bot sementara saat migrasi. Jika ada benturan identitas pesanan menunggu atau kunci kasbon, transaksi dibatalkan tanpa menghapus data; periksa benturan sebelum mencoba ulang. Setelah itu restart backend/bot dan build ulang frontend. Migrasi tidak mengubah menus/menu_schedules.
+
+## Tanggal pada export statis
+
+Tanggal jadwal pelanggan diinisialisasi setelah hydration di browser, menggunakan zona Asia/Jakarta. HTML build dan render browser pertama memakai placeholder yang sama agar build dari hari sebelumnya tidak menimbulkan React error 418. Katalog baru dimuat ketika tanggal/hari sudah siap; tanggal diperbarui setiap 10 detik untuk mengikuti pergantian hari.

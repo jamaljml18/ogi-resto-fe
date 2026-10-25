@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
+import { normalizeCompany } from '../models/identityModel';
 import { WHATSAPP_GROUP_URL } from '../models/whatsappConfig';
 
 export default function WhatsappPaymentConfirmation({ order }) {
@@ -11,7 +12,7 @@ export default function WhatsappPaymentConfirmation({ order }) {
   const message = [
     '/bayar',
     order.userName || order.user_name || '',
-    order.company || '',
+    normalizeCompany(order.company),
     order.division || ''
   ].map(value => String(value).replace(/\s+/g, ' ').trim()).join('\n');
 

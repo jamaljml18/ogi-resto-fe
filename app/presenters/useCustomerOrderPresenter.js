@@ -19,7 +19,7 @@ export function useCustomerOrderPresenter({menus,catalogReady,catalogError,sched
   // Form Data Diri
   const [formData, setFormData] = useState({
     userName: '',
-    company: 'PT Bright Mobile Telecommunication',
+    company: 'PT BMT',
     division: '',
     location: '',
     notes: '',

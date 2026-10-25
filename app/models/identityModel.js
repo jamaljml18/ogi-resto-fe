@@ -1,10 +1,15 @@
+export function normalizeCompany(value) {
+  const company = String(value || '').trim().replace(/\s+/g, ' ');
+  return /^pt\.? (?:bmt|bright mobile (?:telecommunication|telecommuncation|telecommunications))$/i.test(company)
+    ? 'PT BMT' : company;
+}
 export function identityPart(value) {
   return String(value || '').trim().toLocaleLowerCase('id-ID');
 }
 export function orderDailyIdentity(order) {
   return JSON.stringify([
     identityPart(order.user_name || order.userName),
-    identityPart(order.company),
+    identityPart(normalizeCompany(order.company)),
     identityPart(order.division),
     order.order_date || order.orderDate || String(order.created_at || '').split('T')[0]
   ]);

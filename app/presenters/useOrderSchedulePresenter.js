@@ -3,18 +3,23 @@ import { useState,useEffect } from 'react';
 import { jakartaIsoDate,addDays,dayName,dateLabel } from '../models/dateModel';
 export function useOrderSchedulePresenter() {
   const [orderMode,setOrderMode] = useState('today');
-  const [todayIsoDate,setTodayIsoDate] = useState(jakartaIsoDate);
-  const [customDate,setCustomDate] = useState(() => addDays(jakartaIsoDate(),2));
+  // Static HTML and the first browser render must match even on different dates.
+  const [todayIsoDate,setTodayIsoDate] = useState('');
+  const [customDate,setCustomDate] = useState('');
   useEffect(() => {
-    const timer = setInterval(() => setTodayIsoDate(jakartaIsoDate()),10000);
-    return () => clearInterval(timer);
+    const updateDate = () => setTodayIsoDate(jakartaIsoDate());
+    const frame = requestAnimationFrame(updateDate);
+    const timer = setInterval(updateDate,10000);
+    return () => { cancelAnimationFrame(frame); clearInterval(timer); };
   },[]);
-  const tomorrowIsoDate = addDays(todayIsoDate,1);
-  const defaultCustomIsoDate = addDays(todayIsoDate,2);
+  const tomorrowIsoDate = todayIsoDate ? addDays(todayIsoDate,1) : '';
+  const defaultCustomIsoDate = todayIsoDate ? addDays(todayIsoDate,2) : '';
   const effectiveCustomDate = customDate && customDate >= tomorrowIsoDate ? customDate : defaultCustomIsoDate;
-  const todayName = dayName(todayIsoDate),tomorrowName = dayName(tomorrowIsoDate),customDayName = dayName(effectiveCustomDate);
+  const todayName = todayIsoDate ? dayName(todayIsoDate) : '';
+  const tomorrowName = tomorrowIsoDate ? dayName(tomorrowIsoDate) : '';
+  const customDayName = effectiveCustomDate ? dayName(effectiveCustomDate) : '';
   return { orderMode,setOrderMode,todayIsoDate,tomorrowIsoDate,defaultCustomIsoDate,
-    todayName,tomorrowName,todayDateStr:dateLabel(todayIsoDate),tomorrowDateStr:dateLabel(tomorrowIsoDate),
-    customDate:effectiveCustomDate,setCustomDate,customDayName,customDateStr:dateLabel(effectiveCustomDate,true),
+    todayName,tomorrowName,todayDateStr:todayIsoDate ? dateLabel(todayIsoDate) : '?',tomorrowDateStr:tomorrowIsoDate ? dateLabel(tomorrowIsoDate) : '?',
+    customDate:effectiveCustomDate,setCustomDate,customDayName,customDateStr:effectiveCustomDate ? dateLabel(effectiveCustomDate,true) : '?',
     activeSelectedDay:orderMode === 'today' ? todayName : orderMode === 'tomorrow' ? tomorrowName : customDayName };
 }

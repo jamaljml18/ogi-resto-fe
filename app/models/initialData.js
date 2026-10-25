@@ -75,7 +75,7 @@ export const DAYS_LIST = [
   "Minggu",
 ];
 
-export const PRESET_COMPANIES = ["PT Bright Mobile Telecommunication"];
+export const PRESET_COMPANIES = ["PT BMT"];
 
 export const PRESET_DIVISIONS = [
   "PMC",

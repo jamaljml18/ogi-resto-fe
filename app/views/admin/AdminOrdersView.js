@@ -3,10 +3,18 @@ import AdminTableViewport from './AdminTableViewport';
 import { orderDailyIdentity } from '../../models/identityModel';
 import {DAYS_LIST,formatRupiah,PRESET_COMPANIES,PRESET_DIVISIONS,PRESET_LOCATIONS} from '../../models/initialData';
 
-export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations,openOrderEditor}) {
+export default function AdminOrdersView({refreshOrdersHistory,ordersHistoryError,ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations,openOrderEditor}) {
   const visibleOrders = ordersCompact ? ordersGroupedHistory : ordersHistory;
   return (
               <div>
+                <div className="schedule-hero-banner">
+                  <div className="schedule-hero-title">
+                    <h3>Riwayat Pesanan &amp; Laporan CSV</h3>
+                    <p>Data diperbarui otomatis setiap 5 detik selama tab ini aktif, mengikuti filter yang dipilih.</p>
+                  </div>
+                  <button type="button" className="btn-outline-admin" onClick={refreshOrdersHistory}>Muat Ulang</button>
+                </div>
+                {ordersHistoryError && <p className="payment-history-error" role="status">{ordersHistoryError} Data terakhir tetap ditampilkan. Silakan muat ulang.</p>}
                 {/* 4 EXECUTIVE KPI STATS CARDS */}
                 <div className="stats-grid">
                   <div className="stat-card">

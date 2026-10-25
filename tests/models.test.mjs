@@ -46,3 +46,14 @@ test('Daily totals use all three case-insensitive identity fields and retain dat
  assert.deepEqual(uniqueIdentityValues(['HR','hr',' Hr ','QA']),['HR','QA']);
  assert.equal(a.user_name,' Hanan ');
 });
+
+
+test('PT BMT aliases share the same company identity and canonical WhatsApp label',async()=>{
+  const {normalizeCompany,orderDailyIdentity}=await sourceModule('identityModel.js');
+  for(const company of ['pt bmt','PT Bright Mobile Telecommunication','pt bright mobile telecommuncation']) {
+    assert.equal(normalizeCompany(company),'PT BMT');
+    const order={user_name:'Hanan',company,division:'HR',order_date:'2026-10-25'};
+    assert.equal(orderDailyIdentity(order),orderDailyIdentity({...order,company:'PT BMT'}));
+  }
+  assert.equal(normalizeCompany('PT Contoh'),'PT Contoh');
+});

@@ -3593,6 +3593,22 @@ body {
 .waiting-payment-notes { padding: 8px; border-radius: 7px; background: #fffbef; color: #92400e; font-size: 12px; }
 .waiting-payment-confirm { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 18px; margin-bottom: 16px; border: 1px solid #bae6fd; border-radius: 14px; background: #f0f9ff; }
 .waiting-payment-confirm.is-delete { border-color: #fecaca; background: #fff1f2; }
+.waiting-payment-confirm .payment-history-row-actions > button {
+  flex: 0 0 104px;
+  width: 104px;
+  min-width: 104px;
+  height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  .waiting-payment-confirm .payment-history-row-actions { width: 100%; }
+  .waiting-payment-confirm .payment-history-row-actions > button { flex: 1 1 104px; }
+}
+
 .waiting-payment-confirm h4 { margin: 0 0 8px; }
 .waiting-payment-confirm p { margin: 5px 0; font-size: 12px; line-height: 1.6; }
 .pending-payment-overlay {

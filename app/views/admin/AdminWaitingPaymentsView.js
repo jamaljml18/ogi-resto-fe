@@ -31,7 +31,7 @@ export default function AdminWaitingPaymentsView({
             : 'Pesanan akan dihapus dari daftar menunggu dan tidak masuk ke riwayat pesanan.'}</p>
         </div>
         <div className="payment-history-row-actions">
-          <button type="button" className="btn-outline-admin" onClick={cancelWaitingPaymentAction} disabled={waitingPending}>Batal</button>
+          <button type="button" className="admin-row-action btn-outline-admin" onClick={cancelWaitingPaymentAction} disabled={waitingPending}>Batal</button>
           <button type="button" className={'admin-row-action ' + (waitingConfirmation.action === 'pay' ? 'admin-row-action-edit' : 'admin-row-action-delete')}
             onClick={confirmWaitingPaymentAction} disabled={waitingPending}>
             {waitingPending ? 'Memproses...' : waitingConfirmation.action === 'pay' ? 'Bayar' : 'Hapus'}
