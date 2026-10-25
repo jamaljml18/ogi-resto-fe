@@ -2,10 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { dateLabel } from '../../models/dateModel';
+import PaymentHistoryFilters from './PaymentHistoryFilters';
 
 export default function AdminPaymentHistoryView({
   paymentHistory, paymentHistoryLoading, historyError, historyMutationError,
   historyPage, setHistoryPage, historyHasMore, refreshPaymentHistory,
+  historyFilters, setHistoryFilters, applyHistoryFilters, resetHistoryFilters, historyFilterError, historyFiltersActive,
   paymentHistoryForm, setPaymentHistoryForm, editingPaymentHistoryId,
   paymentHistoryPending, paymentHistorySaving, paymentHistoryDeleting,
   handleSavePaymentHistory, startPaymentHistoryEdit, cancelPaymentHistoryEdit,
@@ -81,6 +83,13 @@ export default function AdminPaymentHistoryView({
         </div>
       </div>}
 
+      <PaymentHistoryFilters
+        filters={historyFilters} setFilters={setHistoryFilters} onApply={applyHistoryFilters}
+        onReset={resetHistoryFilters} error={historyFilterError} pending={paymentHistoryPending}
+        availableCompanies={[...new Set([...availableCompanies, ...paymentHistory.map(row => row.company)].filter(Boolean))].sort()}
+        availableDivisions={[...new Set([...availableDivisions, ...paymentHistory.map(row => row.division)].filter(Boolean))].sort()}
+      />
+
       {historyError && <p className="payment-history-error" role="alert">{historyError}</p>}
       <div className="admin-table-container" aria-busy={paymentHistoryLoading}>
         <table className="admin-table">
@@ -88,7 +97,7 @@ export default function AdminPaymentHistoryView({
           <thead><tr>{['No', 'Nama', 'Perusahaan', 'Divisi', 'Tanggal', 'Sumber', 'Aksi'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
           <tbody>
             {paymentHistoryLoading ? <tr><td colSpan={7}>Memuat riwayat pembayaran...</td></tr> :
-              paymentHistory.length === 0 ? <tr><td colSpan={7}>{historyError ? 'Data belum dapat dimuat.' : 'Belum ada riwayat pembayaran.'}</td></tr> :
+              paymentHistory.length === 0 ? <tr><td colSpan={7}>{historyError ? 'Data belum dapat dimuat.' : historyFiltersActive ? 'Tidak ada pembayaran yang sesuai filter.' : 'Belum ada riwayat pembayaran.'}</td></tr> :
                 paymentHistory.map((payment, index) => (
                   <tr key={payment.id} className={editingPaymentHistoryId === String(payment.id) ? 'payment-history-editing-row' : undefined}>
                     <td>{(historyPage - 1) * 50 + index + 1}</td>

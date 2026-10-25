@@ -185,3 +185,21 @@ Jika pembayaran sudah ada di Supabase tetapi belum tampil, tekan Muat Ulang,
 periksa respons request admin, dan pastikan API serta bot memakai project
 Supabase yang sama. Jika muncul 401, login kembali. Jika API gagal terhubung,
 periksa base URL dan health endpoint backend.
+
+
+## Filter Riwayat Pembayaran
+
+Panel filter memakai gaya kartu dan input yang sama dengan Riwayat Pesanan.
+Cari nama (sebagian nama, tanpa membedakan huruf besar/kecil), isi atau pilih
+perusahaan/divisi dari saran yang tersedia, lalu pilih Semua Waktu, Hari Ini
+(WIB), Tanggal Tertentu, Rentang Tanggal, atau Bulan & Tahun.
+Perusahaan dan divisi dicocokkan dengan nilai lengkap; kosong berarti semua.
+
+Klik **Terapkan Filter** untuk mengambil hasil dari backend. **Reset Filter**
+mengembalikan seluruh data. Filter diterapkan sebelum pagination 50 baris dan
+kembali ke halaman pertama saat diubah. Tombol Muat Ulang mempertahankan filter
+yang sudah diterapkan. Respons permintaan lama dibatalkan/diabaikan saat filter
+berubah. Tanggal yang digunakan adalah payment_date, bukan created_at.
+
+Perubahan ini memerlukan versi backend yang mendukung parameter filter.
+Restart backend dan frontend setelah memperbarui kode; tidak perlu migrasi SQL baru.

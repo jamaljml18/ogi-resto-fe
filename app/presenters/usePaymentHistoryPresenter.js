@@ -6,9 +6,35 @@ import { jakartaIsoDate } from '../models/dateModel';
 
 const emptyForm = () => ({ user_name: '', company: '', division: '', payment_date: jakartaIsoDate() });
 
+const emptyHistoryFilters = () => ({
+  search: '', company: '', division: '', dateFilterType: 'all',
+  singleDate: jakartaIsoDate(), startDate: '', endDate: '', periodMonth: jakartaIsoDate().slice(0, 7)
+});
+
+function historyFilterQuery(draft) {
+  const query = { search: draft.search.trim(), company: draft.company.trim(), division: draft.division.trim() };
+  if (draft.dateFilterType === 'today') query.date = jakartaIsoDate();
+  if (draft.dateFilterType === 'single') {
+    if (!draft.singleDate) throw new Error('Pilih tanggal pembayaran.');
+    query.date = draft.singleDate;
+  }
+  if (draft.dateFilterType === 'range') {
+    if (!draft.startDate || !draft.endDate) throw new Error('Isi tanggal awal dan tanggal akhir.');
+    if (draft.startDate > draft.endDate) throw new Error('Tanggal awal tidak boleh melebihi tanggal akhir.');
+    query.startDate = draft.startDate;
+    query.endDate = draft.endDate;
+  }
+  if (draft.dateFilterType === 'month_year') {
+    if (!/^[1-9]\d{3}-(0[1-9]|1[0-2])$/.test(draft.periodMonth)) throw new Error('Pilih bulan dan tahun.');
+    [query.year, query.month] = draft.periodMonth.split('-');
+  }
+  return query;
+}
+
 export function usePaymentHistoryPresenter({ token, active, onError, showToast }) {
   const [historyPage, setHistoryPage] = useState(1);
   const [revision, setRevision] = useState(0);
+  const [filters, setFilters] = useState(() => ({ draft: emptyHistoryFilters(), applied: {}, error: '' }));
   const [result, setResult] = useState({ payments: [], hasMore: false, key: '', error: '' });
   const [editor, setEditor] = useState(() => ({ token, id: null, form: emptyForm() }));
   const [deletion, setDeletion] = useState(null);
@@ -16,7 +42,7 @@ export function usePaymentHistoryPresenter({ token, active, onError, showToast }
   const [mutationError, setMutationError] = useState(null);
   const locked = useRef(false);
   const epoch = useRef(null);
-  const identity = token + ':' + historyPage + ':' + revision;
+  const identity = token + ':' + historyPage + ':' + revision + ':' + JSON.stringify(filters.applied);
   const currentEditor = editor.token === token ? editor : { token, id: null, form: emptyForm() };
   const deleteTarget = deletion?.token === token ? deletion.payment : null;
   const pending = busy?.token === token;
@@ -30,7 +56,7 @@ export function usePaymentHistoryPresenter({ token, active, onError, showToast }
   useEffect(() => {
     if (!active || !token) return;
     const controller = new AbortController();
-    paymentHistoryModel.list(historyPage, token, controller.signal).then(data => {
+    paymentHistoryModel.list(historyPage, token, controller.signal, filters.applied).then(data => {
       if (controller.signal.aborted) return;
       if (!data.payments.length && historyPage > 1) {
         setHistoryPage(page => page - 1);
@@ -43,7 +69,35 @@ export function usePaymentHistoryPresenter({ token, active, onError, showToast }
       onError(error);
     });
     return () => controller.abort();
-  }, [active, token, historyPage, identity, onError]);
+  }, [active, token, historyPage, identity, onError, filters.applied]);
+
+  function setHistoryFilters(value) {
+    if (locked.current) return;
+    setFilters(previous => ({ ...previous, error: '',
+      draft: typeof value === 'function' ? value(previous.draft) : value }));
+  }
+
+  function applyHistoryFilters(event) {
+    event.preventDefault();
+    if (locked.current) return;
+    try {
+      const applied = historyFilterQuery(filters.draft);
+      setFilters(previous => ({ ...previous, applied, error: '' }));
+      setHistoryPage(1);
+      setRevision(value => value + 1);
+      setDeletion(null);
+    } catch (error) {
+      setFilters(previous => ({ ...previous, error: error.message }));
+    }
+  }
+
+  function resetHistoryFilters() {
+    if (locked.current) return;
+    setFilters({ draft: emptyHistoryFilters(), applied: {}, error: '' });
+    setHistoryPage(1);
+    setRevision(value => value + 1);
+    setDeletion(null);
+  }
 
   function setPaymentHistoryForm(value) {
     if (locked.current) return;
@@ -121,6 +175,9 @@ export function usePaymentHistoryPresenter({ token, active, onError, showToast }
 
   return {
     historyPage, setHistoryPage,
+    historyFilters: filters.draft, setHistoryFilters, applyHistoryFilters, resetHistoryFilters,
+    historyFilterError: filters.error,
+    historyFiltersActive: Object.values(filters.applied).some(Boolean),
     historyError: result.key === identity ? result.error : '',
     historyMutationError: mutationError?.token === token ? mutationError.message : '',
     paymentHistory: result.key === identity ? result.payments : [],

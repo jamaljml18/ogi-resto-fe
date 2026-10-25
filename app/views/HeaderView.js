@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import BankAccountDetails from './BankAccountDetails';
+import { WHATSAPP_GROUP_URL } from '../models/whatsappConfig';
 
 export default function HeaderView({ searchQuery, setSearchQuery }) {
   const [showBankAccount, setShowBankAccount] = useState(false);
@@ -30,14 +31,14 @@ export default function HeaderView({ searchQuery, setSearchQuery }) {
 
           <div className="header-actions">
             <a
-              href="https://wa.me/6281312459274?text=Halo%20Ogi%20Resto%2C%20saya%20ingin%20bertanya%20seputar%20menu%20dan%20pesanan%20katering"
+              href={WHATSAPP_GROUP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="btn-whatsapp-header"
-              title="Hubungi Admin / CS via WhatsApp (+62 813-1245-9274)"
+              title="Gabung grup WhatsApp Ogi Resto"
             >
               <span className="wa-icon">💬</span>
-              <span className="wa-text">Chat WhatsApp</span>
+              <span className="wa-text">Grup WhatsApp</span>
             </a>
             <button
               type="button"

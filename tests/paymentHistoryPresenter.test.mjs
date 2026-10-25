@@ -89,3 +89,65 @@ test('Late save response cannot clear another admin session form',async()=>{
   complete({success:true,payment});await saving;p=app.render();
   assert.equal(app.toasts.length,0);assert.equal(p.paymentHistoryForm.user_name,'');
 });
+
+test('Applying filters returns to page one and editing draft does not trigger requests', async () => {
+  const requests = [];
+  const app = setup({ list: async (page, _token, _signal, filters) => {
+    requests.push({ page, filters: JSON.parse(JSON.stringify(filters)) });
+    return { payments: [payment], hasMore: true };
+  } });
+  app.render(); await flush(); let p = app.render();
+  p.setHistoryPage(3); app.render(); await flush(); p = app.render();
+  const previous = requests.length;
+  p.setHistoryFilters(draft => ({ ...draft, search: ' Budi ', company: 'PT A', division: 'HR',
+    dateFilterType: 'range', startDate: '2026-10-01', endDate: '2026-10-24' }));
+  p = app.render(); await flush();
+  assert.equal(requests.length, previous);
+  p.applyHistoryFilters(event); app.render(); await flush(); p = app.render();
+  assert.equal(p.historyPage, 1); assert.equal(p.historyFiltersActive, true);
+  assert.deepEqual(requests.at(-1), { page: 1, filters: { search: 'Budi', company: 'PT A', division: 'HR',
+    startDate: '2026-10-01', endDate: '2026-10-24' } });
+  p.resetHistoryFilters(); app.render(); await flush(); p = app.render();
+  assert.deepEqual(requests.at(-1).filters, {});
+  assert.equal(p.historyFilters.search, ''); assert.equal(p.historyFiltersActive, false);
+});
+
+test('Invalid ranges keep applied data and do not submit a new filter request', async () => {
+  let count = 0;
+  const app = setup({ list: async () => { count++; return { payments: [payment], hasMore: false }; } });
+  app.render(); await flush(); let p = app.render();
+  p.setHistoryFilters(draft => ({ ...draft, dateFilterType: 'range', startDate: '2026-10-25', endDate: '2026-10-01' }));
+  p = app.render(); p.applyHistoryFilters(event); p = app.render();
+  assert.match(p.historyFilterError, /Tanggal awal/); assert.equal(count, 1);
+  assert.equal(p.paymentHistory.length, 1);
+});
+
+test('A late response from old filters cannot overwrite the newly filtered list', async () => {
+  const requests = [];
+  const app = setup({ list: (page, token, signal, filters) => new Promise(resolve => {
+    requests.push({ page, token, signal, filters, resolve });
+  }) });
+  let p = app.render();
+  p.setHistoryFilters(draft => ({ ...draft, search: 'Newest' }));
+  p = app.render(); p.applyHistoryFilters(event); app.render();
+  assert.equal(requests.length, 2); assert.equal(requests[0].signal.aborted, true);
+  requests[1].resolve({ payments: [{ ...payment, user_name: 'Newest' }], hasMore: false });
+  await flush(); p = app.render(); assert.equal(p.paymentHistory[0].user_name, 'Newest');
+  requests[0].resolve({ payments: [payment], hasMore: false });
+  await flush(); p = app.render(); assert.equal(p.paymentHistory[0].user_name, 'Newest');
+});
+
+test('Month period and today filters use the selected month and Jakarta date', async () => {
+  const requests = [];
+  const app = setup({ list: async (_page, _token, _signal, filters) => {
+    requests.push(JSON.parse(JSON.stringify(filters))); return { payments: [], hasMore: false };
+  } });
+  app.render(); await flush(); let p = app.render();
+  p.setHistoryFilters(draft => ({ ...draft, dateFilterType: 'month_year', periodMonth: '2024-02' }));
+  p = app.render(); p.applyHistoryFilters(event); app.render(); await flush(); p = app.render();
+  assert.equal(requests.at(-1).month, '02'); assert.equal(requests.at(-1).year, '2024');
+  p.setHistoryFilters(draft => ({ ...draft, dateFilterType: 'today' }));
+  p = app.render(); p.applyHistoryFilters(event); app.render(); await flush();
+  assert.equal(requests.at(-1).date, '2026-10-17');
+  assert.equal(requests.at(-1).month, undefined);
+});

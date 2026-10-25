@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import BankAccountDetails from './BankAccountDetails';
+import WhatsappPaymentConfirmation from './WhatsappPaymentConfirmation';
 import { formatRupiah } from '../models/initialData';
 
 export default function SuccessModalView({
@@ -156,7 +157,7 @@ export default function SuccessModalView({
                   }}
                 >
                   <span style={{ fontSize: 18 }}>💳</span>
-                  <span>Bayar Sekarang (Buka Rekening)</span>
+                  <span>Lihat No. Rek</span>
                 </button>
               )}
 
@@ -179,40 +180,7 @@ export default function SuccessModalView({
               )}
 
               {lastSubmittedOrder && (
-                <a
-                  href={`https://wa.me/6281312459274?text=${encodeURIComponent(
-                    `Halo Ogi Resto, saya baru saja memesan katering:\n` +
-                    `• No. Pesanan: ${lastSubmittedOrder.order_number || lastSubmittedOrder.id}\n` +
-                    `• Nama: ${lastSubmittedOrder.userName || lastSubmittedOrder.user_name}\n` +
-                    `• PT / Divisi: ${lastSubmittedOrder.company || '-'} / ${lastSubmittedOrder.division || '-'}\n` +
-                    `• Lokasi: ${lastSubmittedOrder.location || '-'}\n` +
-                    `• Metode: ${isKasbon ? 'Kasbon (Bayar Nanti)' : 'Cash / Transfer'}\n` +
-                    (notesText ? `• Catatan: ${notesText}\n` : '') +
-                    `• Total: ${formatRupiah(lastSubmittedOrder.totalPrice || lastSubmittedOrder.total_price)}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-whatsapp-confirm"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    background: '#22c55e',
-                    color: '#ffffff',
-                    textDecoration: 'none',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    padding: '13px 20px',
-                    borderRadius: 'var(--radius-pill)',
-                    boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
-                    transition: 'all 0.2s',
-                    width: '100%'
-                  }}
-                >
-                  <span>💬</span>
-                  <span>Konfirmasi Pesanan ke WhatsApp</span>
-                </a>
+                <WhatsappPaymentConfirmation order={lastSubmittedOrder} />
               )}
               <button
                 type="button"
