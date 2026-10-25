@@ -3884,3 +3884,95 @@ body {
  .order-editor-fields { grid-template-columns: minmax(0,1fr) 74px; gap: 8px; }
  .order-editor-fields .form-input { font-size: 16px; }
 }
+
+/* Customer welcome: CSS/SVG only, optional and short-lived. */
+.welcome-intro {
+ position: fixed; inset: 0; z-index: 2200; display: flex; flex-direction: column;
+ min-height: 100dvh; overflow-y: auto; color: #382e29;
+ background: radial-gradient(ellipse at 77% 45%, #eee0c960, transparent 50%), #faf6ee;
+ animation: welcome-surface-in 220ms ease both; overscroll-behavior: contain;
+}
+.welcome-intro-grain { position: absolute; inset: 0; opacity: .45; pointer-events: none; background-image: radial-gradient(#b39c7838 .6px, transparent .6px); background-size: 7px 7px; mask-image: linear-gradient(100deg, transparent, #000 65%); }
+.welcome-intro-topbar { position: relative; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: max(28px, env(safe-area-inset-top, 0px)) clamp(24px, 6vw, 88px) 18px; }
+.welcome-intro-wordmark { display: flex; flex-direction: column; font: 800 18px/1 'Outfit',sans-serif; letter-spacing: 3.5px; color: #872c42; }
+.welcome-intro-wordmark > span { margin-top: 4px; color: #81643f; font-size: 9px; letter-spacing: 2.6px; }
+.welcome-intro-skip { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 14px; border: 1px solid #ddd0bd; border-radius: 999px; background: #fffcf780; color: #86725e; font: inherit; font-size: 12px; cursor: pointer; }
+.welcome-intro-skip:hover { background: #fffdf8; color: #872c42; }
+.welcome-intro-content { position: relative; flex: 1; width: min(100%, 1100px); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 52px; padding: 24px 48px 40px; }
+.welcome-intro-copy { animation: welcome-copy-in 650ms cubic-bezier(.16,1,.3,1) 80ms both; }
+.welcome-intro-eyebrow { display: flex; align-items: center; gap: 9px; margin: 0 0 18px; color: #84643d; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+.welcome-intro-eyebrow > span { display: inline-block; width: 24px; height: 1px; background: #b18b54; }
+.welcome-intro-copy h1 { margin: 0 0 22px; color: #3b3029; font: 700 clamp(52px, 6vw, 80px)/1.06 'Outfit',sans-serif; letter-spacing: -3px; }
+.welcome-intro-copy h1 > span { color: #872c42; }
+.welcome-intro-tagline { margin: 0 0 12px; font: 500 clamp(22px, 2.5vw, 30px)/1.4 'Outfit',sans-serif; letter-spacing: -.4px; color: #615042; }
+.welcome-intro-copy #welcome-intro-description { margin: 0; color: #7d6b59; font-size: 13px; line-height: 1.8; }
+.welcome-intro-enter { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: 48px; margin-top: 28px; padding: 13px 24px; border: 1px solid #872c42; border-radius: 999px; background: #872c42; color: #fffaf4; box-shadow: 0 8px 22px #872c4220; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.welcome-intro-enter:hover { background: #702338; }
+.welcome-intro button:focus-visible { outline: 3px solid #b59058; outline-offset: 4px; }
+.welcome-intro-art { position: relative; width: 100%; max-width: 420px; aspect-ratio: 1; justify-self: center; animation: welcome-plate-in 1000ms cubic-bezier(.16,1,.3,1) both; }
+.welcome-intro-plate { position: relative; display: block; width: 100%; filter: drop-shadow(0 22px 22px #73512c10); }
+.welcome-intro-orbit { position: absolute; inset: 4px; border: 1px dashed #d7c3a7; border-radius: 50%; animation: welcome-orbit-in 1400ms cubic-bezier(.16,1,.3,1) both; }
+.welcome-intro-seal { position: absolute; left: 3%; bottom: 10%; display: flex; align-items: center; gap: 9px; padding: 12px 16px; border: 1px solid #e5dac9; border-radius: 12px; background: #fffdf8ed; color: #7e705f; box-shadow: 0 8px 24px #6a4f2d09; font-size: 10px; line-height: 1.5; transform: rotate(-5deg); animation: welcome-seal-in 650ms cubic-bezier(.16,1,.3,1) 380ms both; }
+.welcome-intro-seal strong { color: #71583d; font-weight: 600; }
+.welcome-intro-seal-icon { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #eef1e8; color: #71866d; }
+.welcome-intro-spark { position: absolute; color: #bb945c; font: 300 25px 'Outfit',sans-serif; }
+.welcome-intro-spark-one { top: 5%; left: 8%; }
+.welcome-intro-spark-two { right: 3%; bottom: 12%; font-size: 18px; }
+.welcome-intro-steam { animation: welcome-steam 1600ms ease-in-out both; }
+.welcome-intro-steam-two { animation-delay: 140ms; }
+.welcome-intro-steam-three { animation-delay: 280ms; }
+.welcome-intro-footer { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 14px; padding: 0 20px max(26px, env(safe-area-inset-bottom, 0px)); color: #7e6b55; font-size: 10px; letter-spacing: .5px; }
+.welcome-intro-footer > span { width: 26px; height: 1px; background: #d4c0a1; }
+.welcome-intro-leaving { pointer-events: none; animation: welcome-surface-out 380ms cubic-bezier(.55,0,.2,1) both; }
+.customer-arrived > :is(.top-header, .order-mode-container, .category-nav, .main-content) { animation: customer-arrival 480ms cubic-bezier(.16,1,.3,1) both; }
+.customer-arrived > .order-mode-container { animation-delay: 50ms; }
+.customer-arrived > .category-nav { animation-delay: 90ms; }
+.customer-arrived > .main-content { animation-delay: 130ms; }
+.customer-arrived .menu-card { animation: customer-arrival 420ms cubic-bezier(.16,1,.3,1) both; }
+.customer-arrived .menu-card:nth-child(2) { animation-delay: 45ms; }
+.customer-arrived .menu-card:nth-child(3) { animation-delay: 90ms; }
+.customer-arrived .menu-card:nth-child(4) { animation-delay: 135ms; }
+@keyframes welcome-surface-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes welcome-copy-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes welcome-plate-in { from { opacity: 0; transform: scale(.88) rotate(-12deg); } to { opacity: 1; transform: none; } }
+@keyframes welcome-orbit-in { from { opacity: 0; transform: scale(.92) rotate(-30deg); } to { opacity: 1; transform: rotate(6deg); } }
+@keyframes welcome-seal-in { from { opacity: 0; transform: translateY(10px) rotate(-5deg); } to { opacity: 1; transform: rotate(-5deg); } }
+@keyframes welcome-steam { 0% { opacity: 0; transform: translateY(7px); } 40%, 75% { opacity: .85; } 100% { opacity: .45; transform: translateY(-4px); } }
+@keyframes welcome-surface-out { to { opacity: 0; transform: translateY(-18px); } }
+@keyframes customer-arrival { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) and (orientation: portrait) {
+ .welcome-intro-topbar { padding: max(18px, env(safe-area-inset-top, 0px)) 22px 8px; }
+ .welcome-intro-content { grid-template-columns: minmax(0,1fr); align-content: center; gap: 10px; padding: 8px 26px 24px; }
+ .welcome-intro-art { grid-row: 1; width: min(65vw, 255px); }
+ .welcome-intro-copy { text-align: center; }
+ .welcome-intro-eyebrow { justify-content: center; margin-bottom: 10px; font-size: 9px; }
+ .welcome-intro-copy h1 { margin-bottom: 12px; font-size: 48px; letter-spacing: -2px; }
+ .welcome-intro-tagline { margin-bottom: 8px; font-size: 22px; }
+ .welcome-intro-copy #welcome-intro-description { font-size: 12px; }
+ .welcome-intro-enter { min-height: 46px; margin-top: 18px; padding: 12px 24px; }
+ .welcome-intro-seal { padding: 8px 10px; font-size: 8px; border-radius: 9px; bottom: 6%; }
+ .welcome-intro-seal-icon { width: 22px; height: 22px; }
+ .welcome-intro-footer { font-size: 8px; gap: 9px; padding-bottom: max(18px, env(safe-area-inset-bottom, 0px)); }
+ .welcome-intro-footer > span { width: 18px; }
+}
+@media (max-height: 620px) and (orientation: portrait) {
+ .welcome-intro-art { width: min(48vw, 170px); }
+ .welcome-intro-copy h1 { font-size: 39px; }
+ .welcome-intro-tagline { font-size: 19px; }
+ .welcome-intro-linebreak { display: none; }
+ .welcome-intro-content { gap: 6px; padding-top: 0; padding-bottom: 14px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+ .welcome-intro-topbar { padding: 12px 28px 0; }
+ .welcome-intro-content { gap: 20px; padding: 4px 40px 14px; }
+ .welcome-intro-art { max-width: 240px; }
+ .welcome-intro-eyebrow { font-size: 9px; margin-bottom: 8px; }
+ .welcome-intro-copy h1 { font-size: 46px; margin-bottom: 10px; }
+ .welcome-intro-tagline { font-size: 20px; margin-bottom: 6px; }
+ .welcome-intro-copy #welcome-intro-description { font-size: 11px; line-height: 1.6; }
+ .welcome-intro-enter { min-height: 42px; margin-top: 14px; padding: 10px 20px; }
+ .welcome-intro-footer { padding-bottom: 10px; font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ .welcome-intro, .welcome-intro *, .customer-arrived > :is(.top-header, .order-mode-container, .category-nav, .main-content), .customer-arrived .menu-card { animation: none !important; transition: none !important; }
+}

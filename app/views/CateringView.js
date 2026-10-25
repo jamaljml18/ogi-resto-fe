@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import HeaderView from './HeaderView';
+import WelcomeIntro from './WelcomeIntro';
 import OrderModeView from './OrderModeView';
 import MenuCatalogView from './MenuCatalogView';
 import CartFloatingBarView from './CartFloatingBarView';
@@ -11,9 +12,12 @@ import PendingPaymentModal from './PendingPaymentModal';
 import AdminModalView from './AdminModalView';
 
 
-export default function CateringView({presenter}) {
+export default function CateringView({presenter, showWelcome = true}) {
+  const [arrived, setArrived] = useState(false);
+  const finishWelcome = useCallback(() => setArrived(true), []);
   return (
-    <div className="app-wrapper">
+    <div className={'app-wrapper' + (showWelcome && arrived ? ' customer-arrived' : '')}>
+      {showWelcome && <WelcomeIntro onComplete={finishWelcome} />}
       {/* VIEW: HEADER BRAND & PENCARIAN (Tanpa Tombol Admin) */}
       <HeaderView
         searchQuery={presenter.searchQuery}

@@ -162,3 +162,18 @@ PT Contoh/pt contoh dan HR/hr. Penulisan asli tetap ditampilkan. Filter, akumula
 ringkasan, CSV, kasbon dan pencocokan laporan WA menggunakan aturan tersebut.
 Perusahaan/divisi/tanggal yang berbeda tetap dipisahkan. Kunci pelunasan lama tidak diubah,
 dan laporan pembayaran terpisah tidak dihapus atau digabung secara fisik.
+
+## Animasi sambutan pelanggan
+
+WelcomeIntro menampilkan pembuka singkat Ogi Resto dengan ilustrasi SVG/CSS dan transisi
+ke halaman menu. Tampil sekali per sesi tab, memakai sessionStorage ogi_welcome_seen_v1,
+dapat dilewati melalui Lewati/Lihat Menu/Escape, dan tertutup otomatis sekitar dua detik.
+Tidak bergantung pada koneksi API atau menampilkan progress loading palsu.
+
+Route admin /ogi tidak menampilkan pembuka. Browser dengan prefers-reduced-motion atau
+pending pembayaran tersimpan juga langsung masuk halaman. Background dibuat inert dan
+scroll dikunci hanya selama pembuka; fokus/scroll dipulihkan sesudahnya.
+Animasi halaman menu ringan dan mengikuti pengaturan reduced-motion.
+
+Refresh pada sesi tab yang sama tidak mengulang pembuka; gunakan sesi browser baru untuk
+melihat pengalaman kunjungan pertama. Build ulang out setelah mengubah tampilan.
