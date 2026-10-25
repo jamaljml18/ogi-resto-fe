@@ -140,3 +140,17 @@ npm.cmd audit
 Tes mencakup checkout/retry, filter, polling, respons terlambat, preview harga, save ganda,
 konflik dan draft. Uji browser meliputi HP tegak/mendatar, tablet, PC, zoom dan editor.
 Lihat [backend](../backend/README.md) untuk validasi transaksi database.
+
+## Build statis dan hosting
+
+npm run build sekarang menghasilkan out (HTML/CSS/JS). Unggah out ke Netlify manual deploy,
+atau impor Git ke Netlify/Vercel dengan build npm run build dan output out.
+netlify.toml dan vercel.json sudah tersedia; frontend Vercel memakai framework Other.
+
+npm start / npm run preview melayani out secara lokal, bukan next start.
+npm run dev tetap memakai Next development dan rewrite /api.
+Untuk build statis, /api atau environment kosong menjadi http://localhost:5000/api.
+Sebelum dipakai online, set NEXT_PUBLIC_API_URL ke backend publik dan build ulang.
+
+Folder out diabaikan Git. Jangan mengunggah .next, .env.local atau service key.
+Lihat [DEPLOYMENT.md](DEPLOYMENT.md) untuk frontend, API Vercel, dan penempatan bot.

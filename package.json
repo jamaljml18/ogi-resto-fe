@@ -5,9 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/serve-static.mjs",
     "lint": "eslint",
-    "test": "node --test tests/models.test.mjs tests/customerPresenter.test.mjs tests/kasbonPresenter.test.mjs tests/paymentHistoryPresenter.test.mjs tests/waitingPresenters.test.mjs tests/orderEditing.test.mjs"
+    "test": "node --test tests/models.test.mjs tests/customerPresenter.test.mjs tests/kasbonPresenter.test.mjs tests/paymentHistoryPresenter.test.mjs tests/waitingPresenters.test.mjs tests/orderEditing.test.mjs tests/deployment.test.mjs",
+    "preview": "node scripts/serve-static.mjs"
   },
   "dependencies": {
     "next": "^16.4.3",

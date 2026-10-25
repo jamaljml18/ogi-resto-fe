@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve, dirname, basename } from 'node:path';
+import { resolveFrontendApiUrl } from '../scripts/deployment-config.mjs';
+import { createStaticPreviewServer } from '../scripts/serve-static.mjs';
+import config from '../next.config.mjs';
+import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from 'next/constants.js';
+
+test('Static output uses an absolute API URL while local development preserves its rewrite',()=>{
+ assert.equal(resolveFrontendApiUrl({development:true,apiUrl:'/api'}),'/api');
+ assert.equal(resolveFrontendApiUrl({apiUrl:'/api'}),'http://localhost:5000/api');
+ assert.equal(resolveFrontendApiUrl({apiUrl:'https://backend.example/'}),'https://backend.example/api');
+ assert.equal(resolveFrontendApiUrl({apiUrl:'https://backend.example/api/'}),'https://backend.example/api');
+ for(const apiUrl of ['/relative','javascript:alert(1)','https://u:p@example/api','https://example/api?token=secret'])assert.throws(()=>resolveFrontendApiUrl({apiUrl}));
+ const dev=config(PHASE_DEVELOPMENT_SERVER),prod=config(PHASE_PRODUCTION_BUILD);
+ assert.equal(dev.output,undefined);assert.equal(typeof dev.rewrites,'function');
+ assert.equal(prod.output,'export');assert.equal(prod.rewrites,undefined);assert.equal(prod.trailingSlash,true);assert.equal(prod.images.unoptimized,true);
+});
+test('Static preview serves routes/assets and refuses traversal, dotfiles and write methods',async t=>{
+ const fixture=await mkdtemp(join(tmpdir(),'ogi-static-test-'));
+ assert.equal(dirname(resolve(fixture)),resolve(tmpdir()));assert.ok(basename(fixture).startsWith('ogi-static-test-'));
+ const root=join(fixture,'out');await mkdir(join(root,'ogi'),{recursive:true});await mkdir(join(root,'_next/static'),{recursive:true});
+ await writeFile(join(root,'index.html'),'<h1>Home</h1>');await writeFile(join(root,'ogi/index.html'),'<h1>Admin</h1>');
+ await writeFile(join(root,'404.html'),'<h1>Missing</h1>');await writeFile(join(root,'.env'),'private fixture');
+ await writeFile(join(fixture,'outside.txt'),'outside fixture');await writeFile(join(root,'_next/static/runtime.js'),'window.synthetic=true;');
+ const server=createStaticPreviewServer(root);await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ t.after(async()=>{server.closeAllConnections();await new Promise(r=>server.close(r));
+  assert.equal(dirname(resolve(fixture)),resolve(tmpdir()));assert.ok(basename(fixture).startsWith('ogi-static-test-'));await rm(fixture,{recursive:true,force:true});
+ });
+ const url='http://127.0.0.1:'+server.address().port;
+ assert.match(await(await fetch(url+'/')).text(),/Home/);
+ assert.match(await(await fetch(url+'/ogi/')).text(),/Admin/);
+ const redirect=await fetch(url+'/ogi',{redirect:'manual'});assert.equal(redirect.status,308);assert.equal(redirect.headers.get('location'),'/ogi/');
+ const asset=await fetch(url+'/_next/static/runtime.js');assert.match(asset.headers.get('content-type'),/javascript/);assert.match(asset.headers.get('cache-control'),/immutable/);
+ assert.equal((await fetch(url+'/.env')).status,403);
+ const traversal=await fetch(url+'/%2e%2e%5coutside.txt');assert.notEqual(traversal.status,200);assert.doesNotMatch(await traversal.text(),/outside fixture/);
+ assert.equal((await fetch(url+'/',{method:'POST'})).status,405);
+ assert.equal(await(await fetch(url+'/',{method:'HEAD'})).text(),'');
+ assert.equal((await fetch(url+'/api/health')).status,404);
+});
