@@ -7,6 +7,7 @@ import MenuCatalogView from './MenuCatalogView';
 import CartFloatingBarView from './CartFloatingBarView';
 import CheckoutModalView from './CheckoutModalView';
 import SuccessModalView from './SuccessModalView';
+import PendingPaymentModal from './PendingPaymentModal';
 import AdminModalView from './AdminModalView';
 
 
@@ -80,9 +81,20 @@ export default function CateringView({presenter}) {
       {/* VIEW: MODAL BUKTI PEMESANAN SUKSES */}
       <SuccessModalView
         isOpen={presenter.showSuccessModal}
-        onClose={() => presenter.setShowSuccessModal(false)}
+        onClose={() => {
+          presenter.setShowSuccessModal(false);
+          presenter.showPaymentInstructions();
+        }}
         lastSubmittedOrder={presenter.lastSubmittedOrder}
+        paymentConfirmed={presenter.confirmedOrderNumber === presenter.lastSubmittedOrder?.order_number}
       />
+
+      <PendingPaymentModal order={presenter.pendingOrder} isOpen={presenter.paymentInstructionsOpen}
+        status={presenter.paymentStatus} error={presenter.paymentStatusError}
+        onRetry={presenter.retryPaymentStatus} onCancelled={() => {
+          presenter.dismissCancelledPayment();
+          presenter.setShowSuccessModal(false);
+        }} />
 
       {/* VIEW: MODAL PANEL ADMIN (Hanya terbuka jika diakses melalui rute /ogi) */}
       <AdminModalView {...presenter}

@@ -9,6 +9,7 @@ export function useKasbonPresenter({ token,isLoggedIn,onError,showToast }) {
   const [kasbonYear,updateKasbonYear] = useState(Number(initialPeriod[0]));
   const [kasbonCompany,updateKasbonCompany] = useState('Semua');
   const [kasbonDivision,updateKasbonDivision] = useState('Semua');
+  const [revision,setRevision] = useState(0);
   const [report,setReport] = useState({ key:'',rows:[],orders:[] });
   const [failure,setFailure] = useState({key:'',message:''});
   const [savingPayments,setSavingPayments] = useState({});
@@ -33,7 +34,7 @@ export function useKasbonPresenter({ token,isLoggedIn,onError,showToast }) {
     setReport({key:'',rows:[],orders:[]});setFailure({key:'',message:''});
     updateKasbonDivision(value);
   },[kasbonDivision]);
-  const queryKey = JSON.stringify([token,kasbonMonth,kasbonYear,kasbonCompany,kasbonDivision]);
+  const queryKey = JSON.stringify([token,kasbonMonth,kasbonYear,kasbonCompany,kasbonDivision,revision]);
   useEffect(() => {
     if (!isLoggedIn) return;
     const controller = new AbortController();
@@ -78,6 +79,7 @@ export function useKasbonPresenter({ token,isLoggedIn,onError,showToast }) {
   };
   return {kasbonMonth,setKasbonMonth,kasbonYear,setKasbonYear,kasbonCompany,setKasbonCompany,
     kasbonDivision,setKasbonDivision,kasbonOrders,monthlyKasbonMatrix,savingPayments,handleToggleKasbonPayment,
+    refreshKasbon:() => setRevision(value=>value+1),
     handleExportKasbonCsv,kasbonLoading:isLoggedIn && report.key !== queryKey && failure.key !== queryKey,
     kasbonError:failure.key === queryKey ? failure.message : ''};
 }

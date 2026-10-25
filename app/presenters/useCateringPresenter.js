@@ -15,6 +15,9 @@ import { usePaymentHistoryPresenter } from './usePaymentHistoryPresenter';
 import { useKasbonPresenter } from './useKasbonPresenter';
 import { useOrderSchedulePresenter } from './useOrderSchedulePresenter';
 import {useCustomerOrderPresenter} from './useCustomerOrderPresenter';
+import { usePendingPaymentPresenter } from './usePendingPaymentPresenter';
+import { useWaitingPaymentsPresenter } from './useWaitingPaymentsPresenter';
+import { useOrderEditorPresenter } from './useOrderEditorPresenter';
 
 export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const schedule = useOrderSchedulePresenter();
@@ -127,7 +130,9 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   const [catalogError,setCatalogError] = useState('');
   const [catalogDay,setCatalogDay] = useState('');
   const catalogReady = catalogDay === activeSelectedDay;
-  const customer = useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule});
+  const pendingPayment = usePendingPaymentPresenter({ restore: !initialAdminOpen });
+  const customer = useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule,
+    onWaitingOrder: pendingPayment.trackWaitingOrder, waitingForPayment: Boolean(pendingPayment.pendingOrder)});
   const {setCart} = customer;
   const menuRequest = useRef(0);
   useEffect(() => {
@@ -217,6 +222,15 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       if (!signal?.aborted) {setOrdersHistory([]);setOrdersGroupedHistory([]);handleApiError(error);}
     }
   }, [buildOrderFilterParams, adminToken,handleApiError]);
+
+  const orderEditor = useOrderEditorPresenter({token:adminToken,active:isAdminLoggedIn && showAdminModal,
+    onError:handleApiError,showToast,onSaved:async () => { kasbon.refreshKasbon(); await loadOrdersHistory(); }
+  });
+
+  const waitingPayments = useWaitingPaymentsPresenter({
+    token: adminToken, active: isAdminLoggedIn && showAdminModal && adminActiveTab === 'waiting',
+    onError: handleApiError, showToast, onUpdated: loadOrdersHistory
+  });
 
   useEffect(() => {
     if (!isAdminLoggedIn) return;
@@ -589,6 +603,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     totalMenusCount: catalogReady ? menus.length : 0,
 
     ...customer,
+    ...pendingPayment,
 
     // Admin State & Controls
     showAdminModal,
@@ -654,6 +669,8 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
 
     ...kasbon,
     ...paymentHistoryPresenter,
+    ...waitingPayments,
+    ...orderEditor,
     availableDivisions,
     availableCompanies,
     availableLocations,

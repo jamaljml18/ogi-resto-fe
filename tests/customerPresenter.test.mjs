@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
 const cartSource=await readFile(new URL('../app/models/cartModel.js',import.meta.url),'utf8');
 const {summarizeCart}=await import('data:text/javascript;base64,'+Buffer.from(cartSource).toString('base64'));
 const hookSource=(await readFile(new URL('../app/presenters/useCustomerOrderPresenter.js',import.meta.url),'utf8'))
@@ -10,7 +11,7 @@ const schedule={orderMode:'today',todayName:'Selasa',tomorrowName:'Rabu',customD
   todayIsoDate:'2026-10-13',tomorrowIsoDate:'2026-10-14',customDate:'2026-10-15',defaultCustomIsoDate:'2026-10-15'};
 function presenter(submitOrder,props={}) {
   const slots=[];let index=0;
-  const context={orderModel:{submitOrder},summarizeCart,
+  const context={crypto:webcrypto,orderModel:{submitOrder},summarizeCart,
     useMemo:callback=>callback(),
     useState:initial=>{
       const slot=index++;
@@ -48,4 +49,21 @@ test('Checkout blocks stale day catalog and duplicate submissions',async()=>{
   await p.handleSubmitOrder(event);assert.equal(submissions,1);
   complete({success:true,order:{order_number:'synthetic'}});await pending;p=app.render();
   assert.equal(p.showSuccessModal,true);assert.equal(p.cartSummary.totalItems,0);
+});
+
+
+test('Cash retry reuses its private token and blocks another checkout while waiting',async()=>{
+  const requests=[];let waiting;
+  const app=presenter(async body=>{
+    requests.push(body);
+    if(requests.length===1)throw Error('Response lost');
+    return {success:true,order:{order_number:'ORD-SYNTHETIC',payment_status:'waiting',payment_status_token:body.paymentToken}};
+  },{onWaitingOrder:order=>{waiting=order;}});
+  let p=app.render();p.handleAddToCart('m-21');p=app.render();
+  await p.handleSubmitOrder(event);p=app.render();await p.handleSubmitOrder(event);p=app.render();
+  assert.match(requests[0].paymentToken,/^[a-f0-9]{64}$/);
+  assert.equal(requests[0].paymentToken,requests[1].paymentToken);
+  assert.equal(waiting.payment_status,'waiting');assert.equal(p.showSuccessModal,true);
+  p.handleAddToCart('m-21');p=app.render({waitingForPayment:true});
+  await p.handleSubmitOrder(event);assert.equal(requests.length,2);
 });

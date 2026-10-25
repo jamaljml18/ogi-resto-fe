@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import BankAccountDetails from './BankAccountDetails';
-import WhatsappPaymentConfirmation from './WhatsappPaymentConfirmation';
 import { formatRupiah } from '../models/initialData';
 
 export default function SuccessModalView({
   isOpen,
   onClose,
-  lastSubmittedOrder
+  lastSubmittedOrder,
+  paymentConfirmed = false
 }) {
   const [showBankAccountModal, setShowBankAccountModal] = useState(false);
 
@@ -18,6 +18,8 @@ export default function SuccessModalView({
     lastSubmittedOrder &&
     (lastSubmittedOrder.payment_method === 'Kasbon' ||
       lastSubmittedOrder.paymentMethod === 'Kasbon');
+
+  const awaitingPayment = !paymentConfirmed && lastSubmittedOrder?.payment_status === 'waiting';
 
   const notesText =
     lastSubmittedOrder && (lastSubmittedOrder.notes || '');
@@ -30,10 +32,12 @@ export default function SuccessModalView({
             <div className="success-icon-wrap">
               <span>✓</span>
             </div>
-            <h2 className="success-title">Pesanan Berhasil Dikirim!</h2>
+            <h2 className="success-title">{awaitingPayment ? 'Pesanan Menunggu Pembayaran' : 'Pesanan Berhasil Dikirim!'}</h2>
             <p className="success-desc">
               Terima kasih telah memesan makan siang di <strong>Ogi Resto</strong>.
-              Pesanan Anda telah kami terima dan akan disiapkan oleh tim dapur.
+              {awaitingPayment
+                ? ' Silakan lakukan pembayaran dan kirim bukti ke grup untuk menyelesaikan transaksi.'
+                : ' Pesanan Anda telah tercatat dan akan disiapkan oleh tim dapur.'}
             </p>
 
             {lastSubmittedOrder && (
@@ -179,9 +183,6 @@ export default function SuccessModalView({
                 </div>
               )}
 
-              {lastSubmittedOrder && (
-                <WhatsappPaymentConfirmation order={lastSubmittedOrder} />
-              )}
               <button
                 type="button"
                 style={{
@@ -202,7 +203,7 @@ export default function SuccessModalView({
                 }}
                 onClick={() => {setShowBankAccountModal(false);onClose();}}
               >
-                Selesai & Pesan Lagi
+                {awaitingPayment ? 'Selesai — Lanjutkan Pembayaran' : 'Selesai & Pesan Lagi'}
               </button>
             </div>
           </div>

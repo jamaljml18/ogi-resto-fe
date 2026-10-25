@@ -1,225 +1,142 @@
 # Ogi Resto Frontend
 
-Frontend Next.js App Router dan React untuk pemesanan catering serta administrasi.
-Data permanen disimpan oleh backend Express ke Supabase; frontend tidak memiliki
-Supabase client atau key database.
-
-## Halaman dan fitur
-
-| Route / tab | Fungsi |
-| --- | --- |
-| `/` | Katalog menu, hari pemesanan, pencarian/kategori, keranjang, checkout |
-| `/ogi` | Membuka aplikasi dengan panel admin |
-| Manajemen Menu & Jadwal Mingguan | Tambah, edit, hapus menu dan atur ketersediaan per hari |
-| Riwayat Pesanan & Laporan CSV | Filter pesanan, ringkasan transaksi, ekspor |
-| Rekap Kasbon Bulanan | Rekap harian per karyawan, total utang, konfirmasi pembayaran |
-| Riwayat Pembayaran | Tambah manual, edit, hapus, pagination, dan laporan WhatsApp |
-
-Route admin bukan pengganti autentikasi. Backend memeriksa token setiap request admin.
-Aplikasi menampilkan rekening transfer BCA dan tidak memproses payment gateway.
-
-## Rekening pembayaran
-
-Informasi pembayaran yang ditampilkan kepada pelanggan:
-
-```text
-0690595664
-BCA
-A/n: Ogi Nur Saputra
-```
-
-Rekening ditampilkan pada dialog header **Lihat No. Rek** dan pada struk melalui
-**Bayar Sekarang (Buka Rekening)**. Tampilan menggunakan komponen bersama
-`app/views/BankAccountDetails.js`; nilai rekening berada di
-`app/models/paymentInfo.js`. Nomor rekening berupa string untuk mempertahankan
-nol di depan dan dapat diseleksi untuk disalin. CSS kartu menyesuaikan mobile
-sampai desktop.
-
-Petunjuk checkout mengikuti teks:
-**Pada struk nanti akan tersedia tombol untuk membuka Nomer Rekenening.**
-
-Label pelanggan, struk yang dibagikan, dan laporan admin memakai
-**Cash / Transfer**. Nilai API tetap `Cash` atau `Kasbon` agar kompatibel dengan
-rekap yang sudah ada. Tidak ada verifikasi transfer otomatis. Gambar dan tombol
-unduh QRIS pembayaran tidak lagi digunakan pada tampilan.
-
-## Struktur Model-View-Presenter
-
-```text
-app/
-  page.js                         Halaman pelanggan
-  ogi/page.js                     Membuka panel admin
-  layout.js                       Layout aplikasi
-  globals.css                     CSS responsif
-  models/                         API dan fungsi data
-  presenters/                     State React serta koordinasi interaksi
-  views/                          Komponen tampilan
-    admin/                        Form dan tab administrasi
-```
-
-| Komponen | Peran |
-| --- | --- |
-| `models/apiClient.js` | Base URL, fetch JSON, header Bearer, query string, error HTTP, unduh CSV |
-| `models/authModel.js` | Login, validasi sesi, simpan/hapus token localStorage |
-| `models/menuModel.js` | Katalog, CRUD menu admin, simpan jadwal |
-| `models/orderModel.js` | Checkout, riwayat, unduh CSV pesanan/kasbon |
-| `models/kasbonModel.js`, `kasbonReportModel.js` | Request dan pemetaan laporan kasbon |
-| `models/paymentHistoryModel.js` | Daftar, tambah, edit, hapus riwayat pembayaran |
-| `models/dateModel.js`, `cartModel.js` | Tanggal bisnis dan perhitungan keranjang |
-| `presenters/useCateringPresenter.js` | Koordinator utama aplikasi, login, tab, menu/jadwal, dan riwayat |
-| `useCustomerOrderPresenter.js` | State keranjang dan proses checkout |
-| `useOrderSchedulePresenter.js` | Pilihan hari ini, besok, tanggal lain berdasarkan WIB |
-| `useKasbonPresenter.js` | Periode dan konfirmasi pelunasan |
-| `usePaymentHistoryPresenter.js` | Form, pagination, edit, konfirmasi hapus, loading, dan refresh |
-| `views/CateringView.js` | Komposisi halaman dari data dan handler presenter |
-| `views/admin/` | Tampilan masing-masing tab dan form admin |
-
-View menampilkan data dan memanggil handler. Presenter mengatur state, memanggil
-model, serta menerjemahkan respons menjadi tampilan. Model membungkus request
-backend. Aturan penyimpanan, otorisasi, dan validasi final berada di backend.
-
-## Komunikasi API
-
-```mermaid
-flowchart LR
-  V[View] -->|Interaksi| P[Presenter]
-  P --> M[Model / apiClient]
-  M -->|fetch JSON atau CSV| B[Express API]
-  B --> D[(Supabase)]
-  B -->|Respons| M
-  M --> P
-  P -->|State React| V
-```
-
-Saat lokal, browser memanggil `/api/*` pada origin frontend. Rewrite pada
-`next.config.mjs` meneruskannya ke `http://localhost:5000/api/*`.
-Jika `NEXT_PUBLIC_API_URL` diisi URL publik backend, browser memanggil host itu
-langsung. URL harus berakhiran `/api`.
-
-Admin login melalui `/api/auth/login`. Token disimpan di localStorage dengan key
-`ogi_admin_token`; model mengirim `Authorization: Bearer TOKEN`.
-Backend menggunakan token internal HMAC dengan masa berlaku 24 jam, bukan
-Supabase Auth. Respons 401 memicu pembersihan sesi pada penanganan presenter.
-
-Data yang diterima bisa menggunakan snake_case backend, sedangkan state/form
-tertentu menggunakan camelCase; model/presenter melakukan pemetaan sesuai fitur.
-
-## Relasi data yang ditampilkan
-
-- Katalog adalah gabungan master `menus` dan `menu_schedules` berdasarkan hari.
-- Checkout membuat `orders`; item adalah snapshot JSONB, bukan relasi FK ke menu.
-- Rekap kasbon menggabungkan agregasi pesanan periode dengan `kasbon_payments`.
-  Identitas dihitung dari nama, perusahaan, dan divisi yang dinormalisasi.
-- Riwayat pembayaran membaca `history_payments`, tabel tersendiri tanpa FK
-  ke pesanan/kasbon. Mencatat pembayaran tidak otomatis mengubah status lunas.
-- Frontend tidak menggabungkan pesan WhatsApp langsung. Bot/webhook menyimpan
-  melalui backend, kemudian frontend mengambil daftar pembayaran melalui API.
-
-Pada rekap bulanan, Cash tidak menambah total utang Kasbon. Konfirmasi admin
-mengacu bulan tagihan yang dipilih meskipun waktu pembayaran berbeda bulan.
-
-## Riwayat pembayaran
-
-Admin mengisi nama, perusahaan, divisi, dan tanggal. Tanggal awal form memakai
-hari ini dalam WIB dan tetap dapat dipilih untuk input manual. Edit/hapus
-memerlukan respons sukses backend sebelum UI menampilkan keberhasilan.
-Presenter membatasi klik simpan bersamaan dan mengabaikan respons sesi yang sudah
-tidak aktif.
-
-Data ditampilkan 50 baris per halaman. Tombol Muat Ulang mengambil catatan baru
-yang masuk melalui WhatsApp. Belum ada subscription Supabase Realtime atau
-pembaruan push dari bot ke browser.
-
-Sumber ditampilkan sebagai Manual atau WhatsApp berdasarkan ID pesan yang
-tersimpan. Penghapusan adalah soft delete di backend; catatan tidak muncul
-di daftar tetapi ID pesan tetap dipertahankan untuk deduplikasi.
+Next.js App Router dan React untuk pelanggan serta portal admin. Next.js dan
+eslint-config-next saat ini 16.4.3, dengan lockfile yang diperbarui.
 
 ## Menjalankan
 
-Dari folder frontend:
+Gunakan Node.js 22.13+ dan npm. Salin .env.example ke .env.local:
 
-```powershell
-npm.cmd ci
-# Hanya instalasi baru:
-Copy-Item .env.example .env.local
-npm.cmd run dev
-```
-
-Backend harus berjalan di port 5000 untuk rewrite lokal.
-Buka `http://localhost:3000` atau `http://localhost:3000/ogi`.
-
-Isi environment lokal:
-
-```dotenv
+~~~dotenv
 NEXT_PUBLIC_API_URL=/api
-```
+~~~
 
-Untuk host backend terpisah:
+~~~powershell
+npm.cmd ci
+npm.cmd run dev
+~~~
 
-```dotenv
-NEXT_PUBLIC_API_URL=https://DOMAIN_BACKEND/api
-```
+Pelanggan: http://localhost:3000. Admin: http://localhost:3000/ogi.
+Rewrite development meneruskan /api ke localhost:5000; backend berjalan terpisah.
 
-Restart development server setelah mengganti env. Untuk deployment, rebuild
-frontend agar nilai publik yang baru terpakai. `localhost` pada hosting tidak
-menunjuk ke laptop Anda. Saat memakai tunnel frontend di mesin yang sama,
-rewrite masih dapat meneruskan request ke backend lokal.
+Untuk hosting terpisah, NEXT_PUBLIC_API_URL menunjuk backend publik berakhiran /api,
+lalu build ulang. Semua NEXT_PUBLIC_ masuk bundle browser; jangan menyimpan service key,
+password, atau kunci sesi bot di sana. Dengan tunnel frontend, /api membuat browser HP
+memakai origin yang sama; server Next harus tetap dapat menjangkau backend rewrite.
 
-Jangan masukkan service_role Supabase, App Secret Meta, kunci sesi bot, atau
-secret token backend ke `NEXT_PUBLIC_*`; nilainya dapat terlihat di browser.
-Kredensial admin mengikuti konfigurasi backend, bukan nilai di kode frontend.
+## Struktur dan komunikasi
 
-## Pemeriksaan dan produksi
+| Lokasi | Peran |
+| --- | --- |
+| app/page.js | Halaman pelanggan |
+| app/ogi/page.js | Pintu masuk admin |
+| app/views | Tampilan, struk, popup |
+| app/views/admin | Kelima halaman admin dan editor |
+| app/presenters | State dan koordinasi interaksi |
+| app/models | HTTP API, preview, format/data |
+| app/globals.css | Tema, card, tipografi dan responsivitas |
 
-```powershell
+View -> presenter -> model API -> Express -> Supabase. Browser tidak memegang
+Supabase service key atau melakukan mutasi langsung ke database.
+
+## Pelanggan dan pembayaran
+
+Keranjang menampilkan preview. Backend menghitung ulang berdasarkan master menu;
+harga/total browser bukan otoritas.
+
+- Cash/Transfer masuk waiting_payments. Selesai pada struk membuka popup pembayaran.
+- Kasbon langsung masuk orders dan rekap bulanan.
+- Popup berisi total, rekening BCA, dua langkah pembayaran, format /bayar,
+  Salin & Buka Grup WhatsApp, dan status menunggu.
+- Polling status dilakukan serial; paid menutup popup, deleted menampilkan pembatalan.
+  Error jaringan tidak dianggap pembayaran selesai.
+- Status memakai POST /orders/payment-status dengan nomor/token dalam body.
+- ogi_waiting_payment menyimpan informasi minimum pemulihan pending pada origin yang sama.
+  Browser/storage tetap dapat ditutup/dihapus; perubahan origin tunnel memisahkan storage.
+- /ogi tidak memulihkan popup pelanggan yang menghalangi admin.
+
+Rekening bersama: models/paymentInfo.js, BCA 0690595664, A/n Ogi Nur Saputra.
+BankAccountDetails menyediakan salin rekening. Header mempunyai Buka Grup WhatsApp
+dan Lihat No. Rek; grup memakai WHATSAPP_GROUP_URL yang sama dengan popup.
+Tautan grup tidak mengisi caption otomatis. Pelanggan menempel format tersalin pada
+foto bukti transfer, bukan mengirim teks terpisah.
+
+## Portal admin
+
+| Halaman | Fitur |
+| --- | --- |
+| Menu & Jadwal | Master menu/harga, kategori, jadwal, tambah/edit/hapus |
+| Pesanan & CSV | Statistik, filter, ringkasan, ekspor dan edit menu order |
+| Menunggu Pembayaran | Bayar atau batalkan waiting |
+| Kasbon Bulanan | Matriks tanggal, filter, lunas, CSV |
+| Riwayat Pembayaran | Manual, edit, soft delete, filter dan laporan WA |
+
+PC/tablet memakai tab satu baris; HP memakai pemilih halaman dan satu permukaan gulir.
+AdminTableViewport menyediakan geser horizontal, zoom tabel 60-150%, dan reset 100%.
+Toolbar tetap berukuran nyaman dan pinch zoom browser tidak dinonaktifkan.
+
+Tipografi admin: judul 700, label 600, teks normal 400. Angka/identitas penting mendapat
+penekanan. Border/radius/jarak card disamakan. Form Tambah Riwayat Pembayaran memiliki
+header, petunjuk input, tanggal dan footer simpan yang responsif.
+
+## Edit menu pesanan
+
+Tombol Edit membuka satu nomor pesanan. Pada mode ringkasan, daftar Edit pesanan
+meminta pemilihan nomor sumber, bukan mengubah gabungan sekaligus.
+
+1. useOrderEditorPresenter memuat snapshot order dan katalog terbaru.
+2. Item lama tanpa ID dicocokkan hanya dengan nama unik. Menu hilang/ambigu harus diganti.
+3. Admin mengganti menu/jumlah, menambah/menghapus baris.
+4. orderEditModel menghitung preview subtotal, total dan selisih.
+5. Request berisi revision dan id/qty/expectedPrice; backend/database menentukan harga final.
+6. Sukses memuat ulang riwayat, statistik dan rekap kasbon.
+
+Seluruh item edit memakai harga master terbaru. Nomor, identitas, jadwal, lokasi,
+metode bayar dan catatan dipertahankan. Selisih total Cash dicocokkan dengan pelanggan;
+tidak ada pembayaran/refund otomatis. Kasbon lunas ditolak sampai admin membuka status lunas.
+
+Konflik revision/harga mempertahankan draft dan menampilkan Muat Ulang Pesanan & Harga.
+Save ganda diblokir, penutupan saat save dicegah, respons sesi lama diabaikan.
+Modal menyediakan label aksesibel dan focus trap.
+
+**Memerlukan backend terbaru dan migrasi 007_order_item_editing.sql.**
+
+## Presenter/model penting
+
+| File | Fungsi |
+| --- | --- |
+| presenters/useCateringPresenter.js | Katalog, login dan koordinasi hook |
+| presenters/useCustomerOrderPresenter.js | Keranjang, checkout, retry, struk |
+| presenters/usePendingPaymentPresenter.js | Polling, restore, konfirmasi/batal |
+| presenters/useWaitingPaymentsPresenter.js | Waiting dan konfirmasi admin |
+| presenters/usePaymentHistoryPresenter.js | CRUD, filter draft/terapan |
+| presenters/useKasbonPresenter.js | Rekap, lunas, reload setelah edit order |
+| presenters/useOrderEditorPresenter.js | Editor, save guard, konflik, stale response |
+| models/orderEditModel.js | Pemetaan menu lama dan preview harga |
+| models/apiClient.js | Bearer, request JSON, unduh CSV |
+
+## Filter dan CSV
+
+Pesanan memuat otomatis dengan debounce/abort. Ekspor memakai builder parameter yang sama:
+nama, perusahaan, divisi, lokasi, hari, tanggal/periode, mode detail/ringkasan.
+Memilih bulan saat tahun Semua memilih tahun berjalan; Semua Tahun mereset bulan ke Semua.
+
+Kasbon memakai bulan, tahun, perusahaan dan divisi terpilih. Zoom tidak memengaruhi data
+CSV. Ekspor orders tidak mencakup waiting. Waiting dan riwayat pembayaran belum mempunyai CSV.
+
+## Keamanan dan pengujian
+
+Token admin disimpan di browser dan dikirim lewat Bearer, bukan URL. Logout/401 membersihkan
+sesi. Rahasia tetap di backend. Data dirender sebagai teks React; jangan memasukkan HTML
+pengguna mentah. Popup pembayaran bukan bukti mutasi bank atau pengunci browser.
+
+~~~powershell
 npm.cmd test
 npm.cmd run lint
 npm.cmd run build
-npm.cmd start
-```
+npm.cmd audit
+~~~
 
-`start` menjalankan hasil build Next.js. Tes frontend memeriksa model dan perilaku
-presenter; tidak menggantikan uji alur browser dengan API/database sungguhan.
-
-Jika pembayaran sudah ada di Supabase tetapi belum tampil, tekan Muat Ulang,
-periksa respons request admin, dan pastikan API serta bot memakai project
-Supabase yang sama. Jika muncul 401, login kembali. Jika API gagal terhubung,
-periksa base URL dan health endpoint backend.
-
-
-## Filter Riwayat Pembayaran
-
-Panel filter memakai gaya kartu dan input yang sama dengan Riwayat Pesanan.
-Cari nama (sebagian nama, tanpa membedakan huruf besar/kecil), isi atau pilih
-perusahaan/divisi dari saran yang tersedia, lalu pilih Semua Waktu, Hari Ini
-(WIB), Tanggal Tertentu, Rentang Tanggal, atau Bulan & Tahun.
-Perusahaan dan divisi dicocokkan dengan nilai lengkap; kosong berarti semua.
-
-Klik **Terapkan Filter** untuk mengambil hasil dari backend. **Reset Filter**
-mengembalikan seluruh data. Filter diterapkan sebelum pagination 50 baris dan
-kembali ke halaman pertama saat diubah. Tombol Muat Ulang mempertahankan filter
-yang sudah diterapkan. Respons permintaan lama dibatalkan/diabaikan saat filter
-berubah. Tanggal yang digunakan adalah payment_date, bukan created_at.
-
-Perubahan ini memerlukan versi backend yang mendukung parameter filter.
-Restart backend dan frontend setelah memperbarui kode; tidak perlu migrasi SQL baru.
-
-
-## Ringkasan riwayat pesanan per pemesan
-
-Pada tab Riwayat Pesanan, tombol **Ringkas per Pemesan** mengubah beberapa
-pesanan dengan nama, perusahaan, divisi, dan tanggal pengantaran yang sama menjadi
-satu baris. Nama/perusahaan/divisi dibandingkan setelah trim dan normalisasi
-huruf besar/kecil. Tanggal yang berbeda tetap tampil terpisah.
-
-Menu dengan nama dan harga yang sama dijumlahkan kuantitasnya. Seluruh lokasi,
-catatan dengan nomor order asal, serta nomor pesanan tetap dapat dilihat.
-Metode Cash/Transfer dan Kasbon campuran menampilkan nominal masing-masing.
-Statistik transaksi dan rata-rata tetap dihitung dari pesanan asli.
-
-Tombol **Tampilkan Semua Pesanan** mengembalikan tampilan per nomor order.
-Saat mode ringkas aktif, ekspor CSV menggunakan mode ringkasan yang sama dan
-menambah kolom jumlah pesanan serta total Cash/Transfer dan Kasbon.
-Pengelompokan mengikuti filter riwayat yang sedang dipilih, tidak mengubah atau
-menghapus data database. Frontend memerlukan backend versi terbaru; restart
-backend dan frontend setelah memperbarui kode.
+Tes mencakup checkout/retry, filter, polling, respons terlambat, preview harga, save ganda,
+konflik dan draft. Uji browser meliputi HP tegak/mendatar, tablet, PC, zoom dan editor.
+Lihat [backend](../backend/README.md) untuk validasi transaksi database.

@@ -1,4 +1,5 @@
 'use client';
+import AdminTableViewport from './AdminTableViewport';
 
 import { useEffect, useRef } from 'react';
 import { dateLabel } from '../../models/dateModel';
@@ -31,16 +32,27 @@ export default function AdminPaymentHistoryView({
       </div>
 
       {historyMutationError && <p className="payment-history-error" role="alert">{historyMutationError}</p>}
-      <form className="filter-card-panel payment-history-form" onSubmit={handleSavePaymentHistory}>
-        <h4>{editingPaymentHistoryId ? 'Edit Riwayat Pembayaran' : 'Tambah Riwayat Pembayaran'}</h4>
-        <p className="payment-history-form-note">Semua kolom wajib diisi. Gunakan tanggal pembayaran yang sesuai dengan bukti.</p>
+      <form className="filter-card-panel payment-history-form" onSubmit={handleSavePaymentHistory} aria-labelledby="payment-history-form-heading">
+        <div className="payment-history-form-header">
+          <span className="payment-history-form-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+              <rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V2h6v2M9 10h6M9 14h6M9 18h3" />
+            </svg>
+          </span>
+          <div className="payment-history-form-intro">
+            <h4 id="payment-history-form-heading">{editingPaymentHistoryId ? 'Edit Riwayat Pembayaran' : 'Tambah Riwayat Pembayaran'}</h4>
+            <p className="payment-history-form-note">Lengkapi identitas pemesan dan tanggal sesuai bukti pembayaran.</p>
+          </div>
+          <span className="payment-history-form-badge">{editingPaymentHistoryId ? 'Mode edit' : 'Input manual'}</span>
+        </div>
         <fieldset disabled={paymentHistoryPending}>
           {[['user_name', 'Nama'], ['company', 'Perusahaan'], ['division', 'Divisi']].map(([field, label]) => (
             <label key={field} className="form-group">
               <span>{label}</span>
               <input id={'payment-history-' + field} className="form-input" required maxLength={255}
                 list={field === 'company' ? 'payment-history-companies' : field === 'division' ? 'payment-history-divisions' : undefined}
-                value={paymentHistoryForm[field]}
+                placeholder={field === 'user_name' ? 'Nama lengkap pemesan' : field === 'company' ? 'Pilih atau ketik perusahaan' : 'Pilih atau ketik divisi'}
+                autoComplete="off" value={paymentHistoryForm[field]}
                 onChange={event => setPaymentHistoryForm(previous => ({ ...previous, [field]: event.target.value }))} />
             </label>
           ))}
@@ -50,12 +62,15 @@ export default function AdminPaymentHistoryView({
               value={paymentHistoryForm.payment_date}
               onChange={event => setPaymentHistoryForm(previous => ({ ...previous, payment_date: event.target.value }))} />
           </label>
-          <div className="payment-history-form-actions">
+          <div className="payment-history-form-footer">
+            <p>Identitas yang cocok akan mengonfirmasi pesanan yang menunggu pembayaran.</p>
+            <div className="payment-history-form-actions">
             {editingPaymentHistoryId && <button type="button" className="btn-outline-admin"
               onClick={cancelPaymentHistoryEdit}>Batal Edit</button>}
             <button type="submit" className="btn-primary">
               {paymentHistorySaving ? 'Menyimpan...' : editingPaymentHistoryId ? 'Simpan Perubahan' : 'Tambah Pembayaran'}
             </button>
+            </div>
           </div>
         </fieldset>
         <datalist id="payment-history-companies">{availableCompanies.map(value => <option key={value} value={value} />)}</datalist>
@@ -64,7 +79,7 @@ export default function AdminPaymentHistoryView({
 
       <details className="payment-history-help">
         <summary>Format pencatatan melalui WhatsApp</summary>
-        <p>Kirim foto dengan caption berikut dalam satu pesan ke nomor penerima yang terhubung.</p>
+        <p>Kirim foto dan caption berikut dalam satu pesan ke grup WhatsApp Ogi Resto yang terhubung.</p>
         <pre>{'/bayar\nNama\nPerusahaan\nDivisi'}</pre>
         <p>Tanggal dari WhatsApp dicatat otomatis dalam WIB. Gunakan input manual jika pesan belum tercatat.</p>
       </details>
@@ -91,7 +106,7 @@ export default function AdminPaymentHistoryView({
       />
 
       {historyError && <p className="payment-history-error" role="alert">{historyError}</p>}
-      <div className="admin-table-container" aria-busy={paymentHistoryLoading}>
+      <AdminTableViewport aria-busy={paymentHistoryLoading} label="Tabel riwayat pembayaran">
         <table className="admin-table">
           <caption className="payment-history-caption">Riwayat pembayaran, diurutkan dari tanggal terbaru</caption>
           <thead><tr>{['No', 'Nama', 'Perusahaan', 'Divisi', 'Tanggal', 'Sumber', 'Aksi'].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
@@ -121,7 +136,7 @@ export default function AdminPaymentHistoryView({
                 ))}
           </tbody>
         </table>
-      </div>
+      </AdminTableViewport>
       <div className="payment-history-pagination">
         <button type="button" className="btn-outline-admin" disabled={historyPage <= 1 || disabled}
           onClick={() => setHistoryPage(page => page - 1)}>Sebelumnya</button>

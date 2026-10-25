@@ -1,4 +1,5 @@
 'use client';
+import AdminTableViewport from './AdminTableViewport';
 import {DAYS_LIST,getMenuIcon,formatRupiah} from '../../models/initialData';
 
 export default function AdminScheduleView({todayName,adminScheduleDay,setAdminScheduleDay,adminScheduleSearch,setAdminScheduleSearch,adminScheduleCategory,setAdminScheduleCategory,categories,filteredAdminMenus,adminAllMenus,adminSchedules,activeCountForDay,isSavingSchedule,onSaveSchedules,onToggleMenuDayAvailability,onBulkToggleDay,setShowAddMenuModal,onOpenEditModal,onDeleteMenu}) {
@@ -117,7 +118,7 @@ export default function AdminScheduleView({todayName,adminScheduleDay,setAdminSc
                 </div>
 
                 {/* SCHEDULE TABLE */}
-                <div className="admin-table-container">
+                <AdminTableViewport label="Tabel menu dan jadwal">
                   <table className="admin-table">
                     <thead>
                       <tr>
@@ -231,7 +232,7 @@ export default function AdminScheduleView({todayName,adminScheduleDay,setAdminSc
                       })}
                     </tbody>
                   </table>
-                </div>
+                </AdminTableViewport>
               </div>
   );
 }

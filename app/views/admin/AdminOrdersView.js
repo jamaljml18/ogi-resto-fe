@@ -1,7 +1,8 @@
 'use client';
+import AdminTableViewport from './AdminTableViewport';
 import {DAYS_LIST,formatRupiah,PRESET_COMPANIES,PRESET_DIVISIONS,PRESET_LOCATIONS} from '../../models/initialData';
 
-export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations}) {
+export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations,openOrderEditor}) {
   const visibleOrders = ordersCompact ? ordersGroupedHistory : ordersHistory;
   return (
               <div>
@@ -220,7 +221,10 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                             onChange={(e) =>
                               setAdminOrdersFilter({
                                 ...adminOrdersFilter,
-                                month: e.target.value
+                                month: e.target.value,
+                                year: e.target.value !== 'Semua' && (!adminOrdersFilter.year || adminOrdersFilter.year === 'Semua')
+                                  ? (todayIsoDate?.slice(0, 4) || String(new Date().getFullYear()))
+                                  : adminOrdersFilter.year
                               })
                             }
                           >
@@ -249,7 +253,8 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                             onChange={(e) =>
                               setAdminOrdersFilter({
                                 ...adminOrdersFilter,
-                                year: e.target.value
+                                year: e.target.value,
+                                month: e.target.value === 'Semua' ? 'Semua' : adminOrdersFilter.month
                               })
                             }
                           >
@@ -364,7 +369,7 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                 </div>
 
                 {/* TABEL RIWAYAT PESANAN */}
-                <div className="admin-table-container orders-history-table-container" role="region" aria-label="Tabel riwayat pesanan" tabIndex={0}>
+                <AdminTableViewport className="orders-history-table-container" label="Tabel riwayat pesanan">
                   {ordersHistory.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
                       <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
@@ -380,23 +385,25 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                       <colgroup>
                         <col className="order-col-reference" />
                         <col className="order-col-customer" />
-                        <col className="order-col-delivery" />
-                        <col className="order-col-office" />
                         <col className="order-col-menu" />
+                        <col className="order-col-office" />
+                        <col className="order-col-delivery" />
                         <col className="order-col-payment" />
                         <col className="order-col-total" />
                         <col className="order-col-daily" />
+                        <col className="order-col-actions" />
                       </colgroup>
                       <thead>
                         <tr>
                           <th>Waktu & No. Order</th>
                           <th>Data Pemesan</th>
-                          <th>Jadwal Pengantaran</th>
-                          <th>Kantor & Lokasi</th>
                           <th>Detail Menu & Catatan</th>
+                          <th>Kantor & Lokasi</th>
+                          <th>Jadwal Pengantaran</th>
                           <th>Metode Bayar</th>
                           <th style={{ textAlign: 'right' }}>{ordersCompact ? 'Total Gabungan' : 'Total Order'}</th>
                           <th style={{ textAlign: 'right' }}>Total Harian Pemesan</th>
+                          <th>Aksi</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -439,18 +446,6 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                                 <div className="order-secondary-text">Divisi: <strong>{ord.division}</strong></div>
                               </td>
                               <td>
-                                <span className="order-delivery-day">📅 {ord.order_day || ord.orderDay || 'Hari Ini'}</span>
-                                {ord.order_date && <div className="order-delivery-date">
-                                  <span>Tgl Kirim:</span> <time dateTime={ord.order_date}>{ord.order_date}</time>
-                                </div>}
-                              </td>
-                              <td>
-                                <span className="order-company-badge">
-                                  <span aria-hidden="true">🏢</span><span>{ord.company || '-'}</span>
-                                </span>
-                                <div className="order-location"><span aria-hidden="true">📍</span><span>{ord.location || '-'}</span></div>
-                              </td>
-                              <td>
                                 <ul className="order-menu-list">
                                   {Array.isArray(ord.items) && ord.items.filter(item => item && !item._meta).map((item, index) => (
                                     <li key={index}>
@@ -469,6 +464,18 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                                     <p>{notes}</p>
                                   </div>
                                 ))}
+                              </td>
+                              <td>
+                                <span className="order-company-badge">
+                                  <span aria-hidden="true">🏢</span><span>{ord.company || '-'}</span>
+                                </span>
+                                <div className="order-location"><span aria-hidden="true">📍</span><span>{ord.location || '-'}</span></div>
+                              </td>
+                              <td>
+                                <span className="order-delivery-day">📅 {ord.order_day || ord.orderDay || 'Hari Ini'}</span>
+                                {ord.order_date && <div className="order-delivery-date">
+                                  <span>Tgl Kirim:</span> <time dateTime={ord.order_date}>{ord.order_date}</time>
+                                </div>}
                               </td>
                               <td>
                                 {ord.payment_methods?.length > 1 ? (
@@ -494,13 +501,23 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                                   {orderCount > 1 ? 'Akumulasi (' + orderCount + '× order)' : '1× order'}
                                 </span>
                               </td>
+                              <td>
+                                {ordersCompact && ord.order_numbers?.length > 1 ? (
+                                  <details className="order-edit-picker">
+                                    <summary>Edit pesanan</summary>
+                                    <div>{ord.order_numbers.map(number => <button key={number} type="button" onClick={() => openOrderEditor(number)}>Edit {number}</button>)}</div>
+                                  </details>
+                                ) : <button type="button" className="admin-row-action admin-row-action-edit" onClick={() => openOrderEditor(ord.order_numbers?.[0] || ord.order_number)} aria-label={'Edit pesanan ' + (ord.user_name || ord.userName)}>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m16 3 5 5-12 12H4v-5L16 3ZM14 5l5 5" /></svg><span>Edit</span>
+                                </button>}
+                              </td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table>
                   )}
-                </div>
+                </AdminTableViewport>
               </div>
   );
 }

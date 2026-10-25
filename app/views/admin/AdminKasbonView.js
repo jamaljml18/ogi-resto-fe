@@ -1,4 +1,5 @@
 'use client';
+import AdminTableViewport from './AdminTableViewport';
 import {formatRupiah,PRESET_COMPANIES,PRESET_DIVISIONS} from '../../models/initialData';
 
 export default function AdminKasbonView({kasbonMonth,setKasbonMonth,kasbonYear,setKasbonYear,kasbonCompany,setKasbonCompany,kasbonDivision,setKasbonDivision,availableDivisions,availableCompanies,monthlyKasbonMatrix,onExportKasbonCsv,kasbonLoading,kasbonError,savingPayments,onToggleKasbonPayment}) {
@@ -211,7 +212,7 @@ export default function AdminKasbonView({kasbonMonth,setKasbonMonth,kasbonYear,s
                 {kasbonLoading && <p role="status" className="notice">Memuat laporan kasbon...</p>}
                 {kasbonError && <p role="alert" className="notice notice-error">{kasbonError}</p>}
                 {/* MATRIX TABLE */}
-                <div className="admin-table-container" style={{ overflowX: 'auto', maxHeight: '600px' }}>
+                <AdminTableViewport className="kasbon-table-container" label="Tabel kasbon bulanan">
                   {!monthlyKasbonMatrix?.rows || monthlyKasbonMatrix.rows.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
                       <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
@@ -344,7 +345,7 @@ export default function AdminKasbonView({kasbonMonth,setKasbonMonth,kasbonYear,s
                       </tbody>
                     </table>
                   )}
-                </div>
+                </AdminTableViewport>
               </div>
   );
 }

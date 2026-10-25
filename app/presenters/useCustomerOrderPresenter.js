@@ -2,10 +2,11 @@
 import {useState,useMemo,useRef} from 'react';
 import {orderModel} from '../models/orderModel';
 import {summarizeCart} from '../models/cartModel';
-export function useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule}) {
+export function useCustomerOrderPresenter({menus,catalogReady,catalogError,schedule,onWaitingOrder,waitingForPayment=false}) {
   const {orderMode,todayName,tomorrowName,customDayName,todayIsoDate,tomorrowIsoDate,customDate,defaultCustomIsoDate} = schedule;
   const [checkoutError,setCheckoutError] = useState('');
   const submitting = useRef(false);
+  const checkoutAttempt = useRef(null);
   // Keranjang
   const [cart, setCart] = useState({});
 
@@ -53,6 +54,9 @@ export function useCustomerOrderPresenter({menus,catalogReady,catalogError,sched
   // Submit Order Pelanggan
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
+    if (waitingForPayment) {
+      setCheckoutError('Selesaikan pembayaran pesanan sebelumnya terlebih dahulu.'); return;
+    }
     if (cartSummary.totalItems === 0 || submitting.current || catalogError || !catalogReady) return;
     submitting.current = true;
     setCheckoutError('');
@@ -90,9 +94,20 @@ export function useCustomerOrderPresenter({menus,catalogReady,catalogError,sched
       orderDate: chosenIsoDate
     };
 
+    const signature = JSON.stringify(payload);
+    if (!checkoutAttempt.current || checkoutAttempt.current.signature !== signature) {
+      const bytes = new Uint8Array(32);
+      const token = typeof crypto !== 'undefined' && crypto.getRandomValues
+        ? Array.from(crypto.getRandomValues(bytes), byte => byte.toString(16).padStart(2, '0')).join('') : undefined;
+      checkoutAttempt.current = { signature, token };
+    }
+    if (checkoutAttempt.current.token) payload.paymentToken = checkoutAttempt.current.token;
+
     try {
       const resData = await orderModel.submitOrder(payload);
       if (!resData.success || !resData.order) throw new Error('Konfirmasi pesanan dari server tidak valid.');
+      if (resData.order.payment_status === 'waiting') onWaitingOrder?.(resData.order);
+      checkoutAttempt.current = null;
       setLastSubmittedOrder(resData.order);
       setShowCheckoutModal(false);
       setShowSuccessModal(true);
