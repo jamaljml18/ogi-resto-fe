@@ -1,7 +1,8 @@
 'use client';
 import {DAYS_LIST,formatRupiah,PRESET_COMPANIES,PRESET_DIVISIONS,PRESET_LOCATIONS} from '../../models/initialData';
 
-export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations}) {
+export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersHistory,ordersGroupedHistory=[],ordersCompact=false,setOrdersCompact,adminOrdersFilter,setAdminOrdersFilter,adminOrdersSearch,setAdminOrdersSearch,onResetOrdersFilter,onExportCsv,userDailyTotals,userDailyOrderCounts,todayIsoDate,availableDivisions,availableCompanies,availableLocations}) {
+  const visibleOrders = ordersCompact ? ordersGroupedHistory : ordersHistory;
   return (
               <div>
                 {/* 4 EXECUTIVE KPI STATS CARDS */}
@@ -55,6 +56,20 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                   </div>
                 </div>
 
+                <div className="orders-grouping-toolbar">
+                  <div>
+                    <strong>{ordersCompact ? 'Ringkasan per Pemesan' : 'Rincian per Pesanan'}</strong>
+                    <p>{ordersCompact
+                      ? 'Satu baris per nama, perusahaan, divisi, dan tanggal pengantaran. Menu dan total dijumlahkan.'
+                      : 'Setiap nomor pesanan ditampilkan sebagai satu baris.'}</p>
+                    <span>{visibleOrders.length} baris dari {ordersHistory.length} pesanan</span>
+                  </div>
+                  <button type="button" className="btn-outline-admin" aria-pressed={ordersCompact}
+                    onClick={() => setOrdersCompact(previous => !previous)}>
+                    {ordersCompact ? 'Tampilkan Semua Pesanan' : 'Ringkas per Pemesan'}
+                  </button>
+                </div>
+
                 {/* TOOLBAR FILTER MULTI-DIMENSI & EXPORT */}
                 <div className="filter-card-panel">
                   <div className="filter-card-header">
@@ -73,7 +88,7 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                         onClick={onExportCsv}
                         title="Unduh data pesanan ke dalam file Microsoft Excel / Spreadsheet CSV"
                       >
-                        📥 Unduh Laporan Excel / CSV
+                        {ordersCompact ? '📥 Unduh CSV Ringkasan' : '📥 Unduh Laporan Excel / CSV'}
                       </button>
                     </div>
                   </div>
@@ -349,7 +364,7 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                 </div>
 
                 {/* TABEL RIWAYAT PESANAN */}
-                <div className="admin-table-container">
+                <div className="admin-table-container orders-history-table-container" role="region" aria-label="Tabel riwayat pesanan" tabIndex={0}>
                   {ordersHistory.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
                       <div style={{ fontSize: 36, marginBottom: 12 }}>📭</div>
@@ -361,21 +376,31 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                       </p>
                     </div>
                   ) : (
-                    <table className="admin-table">
+                    <table className={'admin-table orders-history-table' + (ordersCompact ? ' orders-table-grouped' : '')}>
+                      <colgroup>
+                        <col className="order-col-reference" />
+                        <col className="order-col-customer" />
+                        <col className="order-col-delivery" />
+                        <col className="order-col-office" />
+                        <col className="order-col-menu" />
+                        <col className="order-col-payment" />
+                        <col className="order-col-total" />
+                        <col className="order-col-daily" />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th>Waktu & No. Order</th>
                           <th>Data Pemesan</th>
-                          <th>Kantor & Lokasi</th>
                           <th>Jadwal Pengantaran</th>
+                          <th>Kantor & Lokasi</th>
                           <th>Detail Menu & Catatan</th>
                           <th>Metode Bayar</th>
-                          <th style={{ textAlign: 'right' }}>Total Order</th>
+                          <th style={{ textAlign: 'right' }}>{ordersCompact ? 'Total Gabungan' : 'Total Order'}</th>
                           <th style={{ textAlign: 'right' }}>Total Harian Pemesan</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {ordersHistory.map((ord) => {
+                        {visibleOrders.map((ord) => {
                           const dateFormatted = ord.created_at
                             ? new Date(ord.created_at).toLocaleString('id-ID', {
                                 day: '2-digit',
@@ -392,141 +417,82 @@ export default function AdminOrdersView({ordersSummary,totalPortionsSold,ordersH
                             (ord.user_name || ord.userName || '').trim().toLowerCase(),
                             ord.company,ord.division,ord.order_date || (ord.created_at ? ord.created_at.split('T')[0] : '')
                           ]);
-                          const dailyTotal = (userDailyTotals && userDailyTotals[userKey]) || (ord.total_price || ord.totalPrice);
-                          const orderCount = (userDailyOrderCounts && userDailyOrderCounts[userKey]) || 1;
+                          const dailyTotal = ordersCompact ? ord.total_price : (userDailyTotals && userDailyTotals[userKey]) || (ord.total_price || ord.totalPrice);
+                          const orderCount = ordersCompact ? ord.order_count : (userDailyOrderCounts && userDailyOrderCounts[userKey]) || 1;
 
                           return (
-                            <tr key={ord.order_number || ord.id}>
+                            <tr key={ord._group_key || ord.order_number || ord.id}>
                               <td>
-                                <strong style={{ fontSize: 13, color: 'var(--primary)', fontFamily: 'monospace' }}>
-                                  {ord.order_number || ord.id}
+                                <strong className={'order-reference' + (ordersCompact ? ' order-reference-grouped' : '')}>
+                                  {ordersCompact ? ord.order_count + ' pesanan digabung' : ord.order_number || ord.id}
                                 </strong>
-                                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>
-                                  🕒 {dateFormatted}
-                                </div>
-                              </td>
-                              <td>
-                                <strong style={{ fontSize: 13.5, color: '#0f172a' }}>
-                                  {ord.user_name || ord.userName}
-                                </strong>
-                                <div style={{ fontSize: 11.5, color: '#64748b' }}>
-                                  Divisi: <strong style={{ color: '#334155' }}>{ord.division}</strong>
-                                </div>
-                              </td>
-                              <td>
-                                <span className="cat-badge cat-badge-karbohidrat" style={{ marginBottom: 4, display: 'inline-block' }}>
-                                  🏢 {ord.company}
-                                </span>
-                                <div style={{ fontSize: 12, color: '#0f172a', fontWeight: 600 }}>
-                                  📍 {ord.location}
-                                </div>
-                              </td>
-                              <td>
-                                <span className="order-day-pill">
-                                  📅 {ord.order_day || ord.orderDay || 'Hari Ini'}
-                                </span>
-                                {ord.order_date && (
-                                  <div style={{ fontSize: 11, color: '#64748b', marginTop: 4, fontWeight: 600 }}>
-                                    🗓️ Tgl Kirim: {ord.order_date}
+                                {ordersCompact && <details className="order-group-numbers">
+                                  <summary>Lihat nomor pesanan</summary>
+                                  <div className="order-group-number-list">
+                                    {ord.order_numbers.map((number, index) => <div key={number + '-' + index}>{number}</div>)}
                                   </div>
-                                )}
+                                </details>}
+                                <div className="order-row-time">🕒 {ordersCompact ? 'Terakhir: ' : ''}{dateFormatted}</div>
                               </td>
                               <td>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                                  {Array.isArray(ord.items) &&
-                                    ord.items.filter(it => it && !it._meta).map((it, idx) => (
-                                      <div key={idx} style={{ fontSize: 12, color: '#334155' }}>
-                                        • <strong>{it.name}</strong> <span style={{ color: 'var(--primary)', fontWeight: 700 }}>x{it.qty}</span>
-                                      </div>
-                                    ))}
-                                </div>
-                                {notes && (
-                                  <div
-                                    style={{
-                                      marginTop: 6,
-                                      padding: '4px 8px',
-                                      background: '#fffbeb',
-                                      border: '1px solid #fde68a',
-                                      borderRadius: 6,
-                                      fontSize: 11.5,
-                                      color: '#92400e'
-                                    }}
-                                  >
-                                    <strong>📝 Catatan:</strong> &quot;{notes}&quot;
-                                  </div>
-                                )}
+                                <strong className="order-customer-name">{ord.user_name || ord.userName}</strong>
+                                <div className="order-secondary-text">Divisi: <strong>{ord.division}</strong></div>
                               </td>
                               <td>
-                                {isKasbon ? (
-                                  <span
-                                    style={{
-                                      background: '#fef3c7',
-                                      color: '#b45309',
-                                      padding: '4px 10px',
-                                      borderRadius: 6,
-                                      fontWeight: 700,
-                                      fontSize: 12,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4
-                                    }}
-                                  >
-                                    📝 Kasbon
-                                  </span>
+                                <span className="order-delivery-day">📅 {ord.order_day || ord.orderDay || 'Hari Ini'}</span>
+                                {ord.order_date && <div className="order-delivery-date">
+                                  <span>Tgl Kirim:</span> <time dateTime={ord.order_date}>{ord.order_date}</time>
+                                </div>}
+                              </td>
+                              <td>
+                                <span className="order-company-badge">
+                                  <span aria-hidden="true">🏢</span><span>{ord.company || '-'}</span>
+                                </span>
+                                <div className="order-location"><span aria-hidden="true">📍</span><span>{ord.location || '-'}</span></div>
+                              </td>
+                              <td>
+                                <ul className="order-menu-list">
+                                  {Array.isArray(ord.items) && ord.items.filter(item => item && !item._meta).map((item, index) => (
+                                    <li key={index}>
+                                      <span>{item.name}</span><span className="order-menu-quantity">×{item.qty}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                                {notes && (ordersCompact ? (
+                                  <details className="order-notes">
+                                    <summary>📝 Lihat catatan</summary>
+                                    <p>{notes}</p>
+                                  </details>
                                 ) : (
-                                  <span
-                                    style={{
-                                      background: '#ecfdf5',
-                                      color: '#047857',
-                                      padding: '4px 10px',
-                                      borderRadius: 6,
-                                      fontWeight: 700,
-                                      fontSize: 12,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 4
-                                    }}
-                                  >
-                                    💵 Cash / Transfer
+                                  <div className="order-notes order-notes-visible">
+                                    <strong>Catatan:</strong>
+                                    <p>{notes}</p>
+                                  </div>
+                                ))}
+                              </td>
+                              <td>
+                                {ord.payment_methods?.length > 1 ? (
+                                  <div className="order-group-payment-methods">
+                                    <span className="order-payment-badge order-payment-cash">Cash / Transfer</span>
+                                    <span className="order-payment-subtotal">{formatRupiah(ord.cash_total)}</span>
+                                    <span className="order-payment-badge order-payment-kasbon">Kasbon</span>
+                                    <span className="order-payment-subtotal">{formatRupiah(ord.kasbon_total)}</span>
+                                  </div>
+                                ) : (
+                                  <span className={'order-payment-badge ' + (isKasbon ? 'order-payment-kasbon' : 'order-payment-cash')}>
+                                    <span aria-hidden="true">{isKasbon ? '📝' : '💵'}</span>
+                                    <span>{isKasbon ? 'Kasbon' : 'Cash / Transfer'}</span>
                                   </span>
                                 )}
                               </td>
-                              <td style={{ textAlign: 'right' }}>
-                                <strong style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14, color: '#334155' }}>
-                                  {formatRupiah(ord.total_price || ord.totalPrice)}
-                                </strong>
+                              <td className="order-amount-cell">
+                                <strong className="order-amount">{formatRupiah(ord.total_price ?? ord.totalPrice)}</strong>
                               </td>
-                              <td style={{ textAlign: 'right' }}>
-                                {orderCount > 1 ? (
-                                  <div>
-                                    <strong style={{ fontFamily: 'Outfit, sans-serif', fontSize: 14.5, color: '#059669', display: 'block' }}>
-                                      {formatRupiah(dailyTotal)}
-                                    </strong>
-                                    <span
-                                      style={{
-                                        display: 'inline-block',
-                                        marginTop: 3,
-                                        background: '#dcfce7',
-                                        color: '#15803d',
-                                        fontSize: 10.5,
-                                        fontWeight: 700,
-                                        padding: '2px 6px',
-                                        borderRadius: 4
-                                      }}
-                                    >
-                                      ⚡ Akumulasi ({orderCount}x order)
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div>
-                                    <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: 13.5, color: '#64748b' }}>
-                                      {formatRupiah(dailyTotal)}
-                                    </span>
-                                    <span style={{ display: 'block', fontSize: 10, color: '#94a3b8' }}>
-                                      (1x order)
-                                    </span>
-                                  </div>
-                                )}
+                              <td className="order-amount-cell">
+                                <strong className={'order-amount' + (orderCount > 1 ? ' order-amount-accent' : '')}>{formatRupiah(dailyTotal)}</strong>
+                                <span className={'order-daily-count' + (orderCount > 1 ? ' order-daily-count-accumulated' : '')}>
+                                  {orderCount > 1 ? 'Akumulasi (' + orderCount + '× order)' : '1× order'}
+                                </span>
                               </td>
                             </tr>
                           );

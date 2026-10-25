@@ -67,6 +67,8 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
 
   // Admin Orders
   const [ordersHistory, setOrdersHistory] = useState([]);
+  const [ordersGroupedHistory, setOrdersGroupedHistory] = useState([]);
+  const [ordersCompact, setOrdersCompact] = useState(false);
   const [adminOrdersSearch, setAdminOrdersSearch] = useState('');
   const [adminOrdersFilter, setAdminOrdersFilter] = useState({
     company: 'Semua',
@@ -209,9 +211,10 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
       if (signal?.aborted) return;
       if (data && Array.isArray(data.orders)) {
         setOrdersHistory(data.orders);
+        setOrdersGroupedHistory(Array.isArray(data.groupedOrders) ? data.groupedOrders : []);
       }
     } catch(error) {
-      if (!signal?.aborted) {setOrdersHistory([]);handleApiError(error);}
+      if (!signal?.aborted) {setOrdersHistory([]);setOrdersGroupedHistory([]);handleApiError(error);}
     }
   }, [buildOrderFilterParams, adminToken,handleApiError]);
 
@@ -539,7 +542,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
   }, [ordersHistory]);
 
   const handleExportCsv = async () => {
-    try {await orderModel.exportCsv(buildOrderFilterParams(),adminToken);}
+    try {await orderModel.exportCsv({ ...buildOrderFilterParams(), ...(ordersCompact ? { groupBy: 'customer_day' } : {}) },adminToken);}
     catch(error) {handleApiError(error);}
   };
 
@@ -639,7 +642,7 @@ export function useCateringPresenter({ initialAdminOpen = false } = {}) {
     // Admin Orders
     ordersSummary,
     totalPortionsSold,
-    ordersHistory,
+    ordersHistory, ordersGroupedHistory, ordersCompact, setOrdersCompact,
     adminOrdersSearch,
     setAdminOrdersSearch,
     adminOrdersFilter,

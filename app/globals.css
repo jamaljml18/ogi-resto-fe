@@ -3482,3 +3482,91 @@ body {
 }
 
 .payment-history-filters .filter-card-title { margin: 0; }
+
+
+.orders-grouping-toolbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  flex-wrap: wrap; padding: 16px 20px; margin-bottom: 18px;
+  border: 1px solid var(--border-card); border-radius: 14px; background: #fffdfa;
+}
+.orders-grouping-toolbar strong { font-size: 14px; color: var(--text-main); }
+.orders-grouping-toolbar p { margin: 6px 0; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
+.orders-grouping-toolbar span { color: #0369a1; font-size: 12px; font-weight: 600; }
+.orders-grouping-toolbar button { min-height: 44px; }
+.orders-grouping-toolbar button[aria-pressed="true"] { background: #e0f2fe; border-color: #0284c7; color: #075985; }
+.order-group-numbers { max-width: 240px; margin-top: 6px; font-size: 11px; }
+.order-group-numbers summary { cursor: pointer; color: #0369a1; font-weight: 600; }
+.order-group-numbers div { padding-top: 4px; overflow-wrap: anywhere; font-family: monospace; }
+.order-group-payment-methods { display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+
+
+@media (max-width: 640px) {
+  .orders-grouping-toolbar { padding: 14px; align-items: stretch; }
+  .orders-grouping-toolbar button { width: 100%; }
+}
+
+
+/* Order history: scoped widths and top alignment keep grouped rows readable. */
+.orders-history-table-container { width: 100%; max-width: 100%; overscroll-behavior-x: contain; }
+.orders-history-table { table-layout: fixed; min-width: 1510px; width: 100%; }
+.orders-history-table .order-col-reference { width: 200px; }
+.orders-history-table .order-col-customer { width: 155px; }
+.orders-history-table .order-col-delivery { width: 180px; }
+.orders-history-table .order-col-office { width: 220px; }
+.orders-history-table .order-col-menu { width: 280px; }
+.orders-history-table .order-col-payment { width: 170px; }
+.orders-history-table .order-col-total { width: 130px; }
+.orders-history-table .order-col-daily { width: 175px; }
+.orders-history-table th, .orders-history-table td { padding: 16px 14px; box-sizing: border-box; }
+.orders-history-table th { white-space: normal; line-height: 1.5; font-size: 10.5px; }
+.orders-history-table td { vertical-align: top; white-space: normal; overflow-wrap: normal; word-break: normal; line-height: 1.6; }
+.orders-history-table tbody tr:hover td { background: #fbf7f1; }
+.orders-history-table .order-reference {
+  display: block; font: 600 11.5px/1.6 ui-monospace, monospace;
+  color: var(--primary); overflow-wrap: anywhere;
+}
+.orders-history-table .order-reference-grouped { font: inherit; font-size: 13px; font-weight: 750; color: #334155; }
+.order-row-time { margin-top: 8px; font-size: 11px; line-height: 1.6; color: #64748b; }
+.order-customer-name { display: block; color: #0f172a; font-size: 13px; line-height: 1.6; }
+.order-secondary-text { margin-top: 4px; color: #64748b; font-size: 11.5px; }
+.order-delivery-day { display: block; font-size: 12px; color: #334155; }
+.order-delivery-date { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; font-size: 11px; color: #64748b; }
+.order-delivery-date time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.order-company-badge {
+  display: inline-flex; align-items: flex-start; gap: 7px; box-sizing: border-box;
+  max-width: 100%; padding: 7px 9px; border: 1px solid #e7ddd0; border-radius: 8px;
+  background: #f8f2e9; color: #654b33; font-size: 11.5px; font-weight: 600; line-height: 1.6;
+}
+.order-company-badge > span:first-child, .order-location > span:first-child { flex: 0 0 auto; }
+.order-company-badge > span:last-child, .order-location > span:last-child { min-width: 0; overflow-wrap: break-word; }
+.order-location { display: flex; gap: 6px; margin-top: 8px; color: #475569; font-size: 12px; line-height: 1.6; }
+.order-menu-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.order-menu-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; font-size: 12px; line-height: 1.6; }
+.order-menu-list li > span:first-child { min-width: 0; overflow-wrap: break-word; color: #334155; }
+.order-menu-quantity { flex: 0 0 auto; padding: 0 6px; border-radius: 5px; background: #f3ede5; color: #87542f; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.order-notes { margin-top: 10px; padding: 7px 9px; border: 1px solid #f3dfaa; border-radius: 8px; background: #fffbef; color: #92400e; font-size: 11.5px; }
+.order-notes summary { cursor: pointer; font-weight: 650; }
+.order-notes p { margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #f3dfaa; overflow-wrap: anywhere; white-space: pre-wrap; line-height: 1.7; }
+.order-payment-badge {
+  display: inline-flex; align-items: flex-start; gap: 6px; box-sizing: border-box;
+  max-width: 100%; padding: 6px 8px; border: 1px solid transparent; border-radius: 8px;
+  font-size: 11.5px; font-weight: 650; line-height: 1.5;
+}
+.order-payment-cash { background: #ecfdf5; border-color: #d1fae5; color: #047857; }
+.order-payment-kasbon { background: #fffbeb; border-color: #fde68a; color: #a16207; }
+.order-group-payment-methods { align-items: flex-start; gap: 4px; }
+.order-group-payment-methods .order-payment-subtotal { padding: 0 0 5px; background: transparent; color: #475569; font-size: 11.5px; white-space: nowrap; }
+.order-amount-cell { text-align: right; }
+.order-amount { display: block; white-space: nowrap; font-size: 13px; font-weight: 750; color: #334155; font-variant-numeric: tabular-nums; }
+.order-amount-accent { color: #059669; }
+.order-daily-count { display: inline-block; margin-top: 7px; font-size: 10px; color: #64748b; line-height: 1.5; }
+.order-daily-count-accumulated { padding: 3px 6px; background: #ecfdf5; border: 1px solid #d1fae5; border-radius: 6px; color: #047857; }
+.orders-history-table .order-group-numbers { margin-top: 6px; max-width: 100%; }
+.order-group-number-list { margin-top: 6px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid #e2e8f0; border-radius: 7px; background: #f8fafc; }
+.orders-history-table .order-group-numbers summary:focus-visible,
+.order-notes summary:focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; border-radius: 3px; }
+.orders-history-table-container:focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .orders-history-table th, .orders-history-table td { padding: 12px; }
+  .orders-history-table-container { -webkit-overflow-scrolling: touch; }
+}

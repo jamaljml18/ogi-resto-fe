@@ -203,3 +203,23 @@ berubah. Tanggal yang digunakan adalah payment_date, bukan created_at.
 
 Perubahan ini memerlukan versi backend yang mendukung parameter filter.
 Restart backend dan frontend setelah memperbarui kode; tidak perlu migrasi SQL baru.
+
+
+## Ringkasan riwayat pesanan per pemesan
+
+Pada tab Riwayat Pesanan, tombol **Ringkas per Pemesan** mengubah beberapa
+pesanan dengan nama, perusahaan, divisi, dan tanggal pengantaran yang sama menjadi
+satu baris. Nama/perusahaan/divisi dibandingkan setelah trim dan normalisasi
+huruf besar/kecil. Tanggal yang berbeda tetap tampil terpisah.
+
+Menu dengan nama dan harga yang sama dijumlahkan kuantitasnya. Seluruh lokasi,
+catatan dengan nomor order asal, serta nomor pesanan tetap dapat dilihat.
+Metode Cash/Transfer dan Kasbon campuran menampilkan nominal masing-masing.
+Statistik transaksi dan rata-rata tetap dihitung dari pesanan asli.
+
+Tombol **Tampilkan Semua Pesanan** mengembalikan tampilan per nomor order.
+Saat mode ringkas aktif, ekspor CSV menggunakan mode ringkasan yang sama dan
+menambah kolom jumlah pesanan serta total Cash/Transfer dan Kasbon.
+Pengelompokan mengikuti filter riwayat yang sedang dipilih, tidak mengubah atau
+menghapus data database. Frontend memerlukan backend versi terbaru; restart
+backend dan frontend setelah memperbarui kode.
